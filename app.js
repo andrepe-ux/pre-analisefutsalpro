@@ -8,6 +8,10 @@ let isRunning = false;
 let homeGoals = 0;
 let awayGoals = 0;
 
+// Temporizador de Exclusão (Vermelho - 120 segundos)
+let redCardSecondsRemaining = 0;
+let redCardActive = false;
+
 let actionLogsHistory = {
     1: [],
     2: []
@@ -231,6 +235,17 @@ function startTimer() {
             if (totalSeconds > 0) {
                 totalSeconds--;
                 updateTimerDisplay();
+
+                // Lógica do temporizador de exclusão (Vermelho - 2 min)
+                if (redCardActive && redCardSecondsRemaining > 0) {
+                    redCardSecondsRemaining--;
+                    updateRedCardTimerDisplay();
+                    if (redCardSecondsRemaining <= 0) {
+                        redCardActive = false;
+                        document.getElementById('red-card-timer-box').style.display = 'none';
+                    }
+                }
+
                 players.forEach(player => {
                     if (player.isOnField) {
                         if (currentPeriod === 1) player.secondsPlayedP1++;
@@ -258,6 +273,20 @@ function resetTimer() {
     pauseTimer();
     totalSeconds = periodDurationMinutes * 60;
     updateTimerDisplay();
+}
+
+function triggerRedCardExclusion() {
+    redCardSecondsRemaining = 120; // 2 minutos
+    redCardActive = true;
+    document.getElementById('red-card-timer-box').style.display = 'block';
+    updateRedCardTimerDisplay();
+}
+
+function updateRedCardTimerDisplay() {
+    let mins = Math.floor(redCardSecondsRemaining / 60);
+    let secs = redCardSecondsRemaining % 60;
+    document.getElementById('red-card-timer-text').innerText = 
+        `🟥 EXCLUSÃO: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 function requestTimeout(team) {
@@ -487,7 +516,8 @@ function addCard(event, index, cardType) {
     } else if (cardType === 'red') {
         player.redCards++;
         player.isOnField = false;
-        logAction(teamName.toUpperCase(), `Cartão Vermelho: #${player.number} ${player.name}`, null, null);
+        triggerRedCardExclusion(); // Ativa o temporizador de 2 minutos a piscar
+        logAction(teamName.toUpperCase(), `Cartão Vermelho: #${player.number} ${player.name} (Exclusão 2min)`, null, null);
     }
     renderPlayersList();
 }
@@ -516,12 +546,12 @@ function renderPlayersList() {
                 <input type="text" class="player-name-input" value="${player.name}" onclick="event.stopPropagation()" onchange="updatePlayerName(${index}, this.value)">
             </div>
             <div class="tile-timers-box">
-                <div class="tile-timer-col">
-                    <span class="tile-time-label">Jogo</span>
+                <div class="tile-timer-row">
+                    <span class="tile-time-label">Jogo:</span>
                     <span class="tile-time-val play" id="tile-play-${index}">${formatTime(totalPlayed)}</span>
                 </div>
-                <div class="tile-timer-col">
-                    <span class="tile-time-label">Banco</span>
+                <div class="tile-timer-row">
+                    <span class="tile-time-label">Banco:</span>
                     <span class="tile-time-val rest" id="tile-rest-${index}">${formatTime(totalRested)}</span>
                 </div>
             </div>
@@ -551,16 +581,28 @@ function updateTimesOnly() {
 }
 
 // -------------------------------------------------------------
-// GRÁFICOS DESPORTIVOS (Chart.js)
+// GRÁFICOS DESPORTIVOS (Chart.js - Linhas e Barras)
 // -------------------------------------------------------------
 function initCharts() {
+    // Gráfico de Minutos (Linha suave)
     let ctxMin = document.getElementById('chartMinutes').getContext('2d');
     chartMinutesInstance = new Chart(ctxMin, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Minutos em Jogo', data: [], backgroundColor: '#00ffcc' }] },
+        type: 'line',
+        data: { 
+            labels: [], 
+            datasets: [{ 
+                label: 'Minutos em Jogo', 
+                data: [], 
+                borderColor: '#00ffcc', 
+                backgroundColor: 'rgba(0, 255, 204, 0.15)', 
+                fill: true, 
+                tension: 0.3 
+            }] 
+        },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa', font: { size: 10 } } } } }
     });
 
+    // Gráfico de Remates e Golos (Barras)
     let ctxShots = document.getElementById('chartShots').getContext('2d');
     chartShotsInstance = new Chart(ctxShots, {
         type: 'bar',
@@ -568,6 +610,7 @@ function initCharts() {
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa' } } } }
     });
 
+    // Gráfico de Substituições (Barras)
     let ctxSubs = document.getElementById('chartSubs').getContext('2d');
     chartSubsInstance = new Chart(ctxSubs, {
         type: 'bar',
@@ -679,7 +722,7 @@ async function exportReportPDF() {
     doc.text(`Partida: ${homeName} ${homeGoals} - ${awayGoals} ${awayName}`, 14, 26);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString()} | andrepe @ 2026`, 14, 32);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString()} | Analista: ${loggedInUsername.toUpperCase()} | andrepe @ 2026`, 14, 32);
 
     let y = 40;
     if (observations) {

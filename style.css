@@ -1,202 +1,291 @@
-/* style.css PRO */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: #ffffff;
-    margin: 0;
-    height: 100vh;
-    overflow: hidden;
-    font-size: 15px;
+/* style.css - Análise Futsal PRO */
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Ecrãs de Login e Modais */
+#login-screen, #setup-game-screen, #roster-select-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.login-card {
+    background-color: #1a1a1a;
+    border: 2px solid #00ffcc;
+    border-radius: 10px;
+    padding: 25px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
+}
+.login-card h2 {
+    color: #00ffcc;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+.login-input-group {
+    margin-bottom: 12px;
+    text-align: left;
+}
+.login-input-group label {
+    display: block;
+    font-size: 0.78rem;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+.login-input-group input, .login-input-group select {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: #252525;
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+.login-input-group input:focus, .login-input-group select:focus {
+    border-color: #00ffcc;
+    outline: none;
+}
+.btn-login {
+    width: 100%;
+    background-color: #00ffcc;
+    color: #000;
+    font-weight: bold;
+    padding: 9px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 8px;
+}
+.btn-login:hover {
+    background-color: #00cca3;
+}
+.btn-secondary-action {
+    width: 100%;
+    background-color: #333;
+    color: #00ffcc;
+    font-weight: bold;
+    padding: 9px;
+    border: 1px solid #00ffcc;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+.btn-secondary-action:hover {
+    background-color: #444;
+}
+#login-error {
+    color: #ff5555;
+    font-size: 0.78rem;
+    margin-top: 8px;
+    min-height: 16px;
+}
+
+/* Layout Principal */
 .main-layout {
     display: flex;
     width: 100vw;
     height: 100vh;
-}
-
-.left-panel {
-    width: 50%;
-    height: 100vh;
-    background-color: #181818;
+    gap: 8px;
     padding: 8px;
     box-sizing: border-box;
-    border-right: 2px solid #2b2b2b;
+    overflow: hidden;
+}
+
+/* Painel Esquerdo (Plantel / Gráficos) */
+.left-panel {
+    flex: 1.25;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    padding: 8px;
+    height: calc(100vh - 16px);
 }
 
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
 }
 
 .panel-header h3 {
-    color: #00ffcc;
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    color: #00ffcc;
 }
 
 .header-right-actions {
     display: flex;
-    align-items: center;
     gap: 4px;
 }
 
 .btn-tab {
-    background-color: #2b2b2b;
+    background: #252525;
     color: #aaa;
-    font-size: 0.7rem;
-    padding: 3px 6px;
+    border: 1px solid #444;
+    padding: 3px 8px;
+    font-size: 0.72rem;
     border-radius: 4px;
     cursor: pointer;
-    border: none;
 }
-
 .btn-tab.active {
-    background-color: #00ffcc;
+    background: #00ffcc;
     color: #000;
     font-weight: bold;
-}
-
-.tab-content {
-    display: none;
-    flex-direction: column;
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.tab-content.active {
-    display: flex;
-}
-
-.excel-actions {
-    display: flex;
-    gap: 3px;
+    border-color: #00ffcc;
 }
 
 .session-actions-box {
     display: flex;
     gap: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .btn-session-save, .btn-session-load {
-    background-color: #6f42c1;
-    color: white;
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    font-weight: bold;
-    border: none;
-    text-align: center;
     flex: 1;
-}
-
-.btn-session-save:hover { background-color: #59339d; }
-.btn-session-load:hover { background-color: #59339d; }
-.session-actions-box input[type="file"] { display: none; }
-
-.btn-excel, .btn-template {
-    background-color: #198754;
-    color: white;
-    padding: 3px 6px;
+    background: #222;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    padding: 5px;
+    font-size: 0.72rem;
     border-radius: 4px;
-    font-size: 0.7rem;
+    text-align: center;
     cursor: pointer;
     font-weight: bold;
-    border: none;
+}
+.btn-session-save:hover, .btn-session-load:hover {
+    background: #00ffcc;
+    color: #000;
+}
+input[type="file"] {
+    display: none;
 }
 
-.btn-template { background-color: #0d6efd; }
+.tab-content {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+.tab-content.active {
+    display: flex;
+}
 
-/* Grelha de Atletas - Destaque Máximo */
+/* Grelha de Atletas rigorosamente para 4x4 */
 .players-grid-container {
+    flex: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
     gap: 5px;
-    flex-grow: 1;
     overflow-y: auto;
-    padding: 2px;
+    padding-right: 2px;
+    margin-bottom: 6px;
 }
 
 .player-card-tile {
-    background-color: #212121;
-    border: 2px solid #333;
+    background: #222;
+    border: 1px solid #333;
     border-radius: 6px;
     padding: 6px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
-
+.player-card-tile:hover {
+    border-color: #555;
+}
 .player-card-tile.field {
+    background: #103326;
     border-color: #00ffcc;
-    background-color: #112822;
+    box-shadow: 0 0 6px rgba(0, 255, 204, 0.2);
 }
 
 .tile-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 4px;
+    align-items: center;
 }
-
+/* Tamanho do número do atleta aumentado 2x (aprox 1.5rem) */
 .player-num-input {
-    background: transparent;
-    border: none;
+    width: 44px;
+    background: #111;
     color: #ffcc00;
-    font-size: 1.45rem;
+    border: 1px solid #444;
+    text-align: center;
     font-weight: bold;
-    width: 40px;
-    text-align: left;
+    font-size: 1.45rem; 
+    border-radius: 3px;
+    padding: 2px;
 }
-
+/* Tamanho do nome do atleta aumentado 2x (aprox 1.3rem) */
 .player-name-input {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid #777;
+    flex: 1;
+    background: #111;
     color: #fff;
-    font-size: 1.2rem;
-    font-weight: bold;
-    width: 105px;
-    text-align: right;
+    border: 1px solid #444;
+    font-size: 1.25rem; 
+    padding: 4px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Tempos em Destaque (Jogo e Banco) */
+/* Relógios sobrepostos verticalmente e aumentados 2x */
 .tile-timers-box {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin: 2px 0;
+    flex-direction: column; 
+    gap: 2px;
+    background: #181818;
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin: 4px 0;
 }
-
-.tile-timer-col {
+.tile-timer-row {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
 }
-
 .tile-time-label {
-    font-size: 0.55rem;
+    font-size: 0.75rem;
     color: #888;
-    text-transform: uppercase;
 }
-
+/* Tamanho dos relógios aumentado 2x (aprox 1.4rem) */
 .tile-time-val {
-    font-size: 1.15rem;
-    font-weight: bold;
+    font-size: 1.35rem; 
     font-family: monospace;
+    font-weight: bold;
 }
-
 .tile-time-val.play { color: #00ffcc; }
 .tile-time-val.rest { color: #ff5555; }
 
@@ -204,480 +293,565 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #2f2f2f;
-    padding-top: 4px;
+    margin-top: 2px;
 }
-
 .tile-cards {
     display: flex;
-    gap: 3px;
+    gap: 4px;
 }
-
 .card-square {
-    width: 18px;
-    height: 18px;
-    border-radius: 2px;
     border: none;
-    font-size: 0.65rem;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.yellow-sq { background-color: #ffc107; color: #000; }
-.red-sq { background-color: #dc3545; color: #fff; }
-
-.tile-status-badge {
-    font-size: 0.7rem;
+    color: #000;
+    font-size: 0.72rem;
     font-weight: bold;
     padding: 2px 6px;
     border-radius: 3px;
-    background-color: #333;
-    color: #ccc;
+    cursor: pointer;
 }
+.yellow-sq { background: #ffc107; }
+.red-sq { background: #dc3545; color: #fff; }
 
+.tile-status-badge {
+    font-size: 0.65rem;
+    font-weight: bold;
+    color: #aaa;
+}
 .player-card-tile.field .tile-status-badge {
-    background-color: #00ffcc;
-    color: #000;
-}
-
-/* Gráficos Desportivos */
-.charts-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 4px;
-}
-
-.chart-wrapper {
-    background: #161616;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 8px;
-    height: 170px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.chart-wrapper h4 {
-    margin: 0 0 4px 0;
-    font-size: 0.75rem;
     color: #00ffcc;
-    text-align: center;
 }
 
-.chart-wrapper canvas {
-    max-height: 135px !important;
-    width: 100% !important;
-}
-
-/* Observações */
 .observations-box {
-    margin-top: 4px;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 55px;
+    margin-top: auto;
 }
-
 .observations-box label {
-    font-size: 0.7rem;
-    color: #00ffcc;
+    font-size: 0.72rem;
+    color: #aaa;
 }
-
 .observations-box textarea {
-    background-color: #151515;
+    background: #111;
     border: 1px solid #333;
     color: #fff;
-    border-radius: 4px;
     resize: none;
     height: 38px;
-    padding: 3px;
-    font-size: 0.75rem;
+    padding: 4px;
+    font-size: 0.72rem;
+    border-radius: 4px;
 }
 
-.right-panel {
-    width: 50%;
-    height: 100vh;
-    background-color: #1e1e1e;
+/* Gráficos */
+.charts-container {
+    flex: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+.chart-wrapper {
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+.chart-wrapper h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.72rem;
+    color: #aaa;
+    text-align: center;
+}
+.chart-wrapper canvas {
+    flex: 1;
+}
+
+/* Painel Direito (Placar, Estatísticas e Campos) */
+.right-panel {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 16px);
 }
 
 .scoreboard-container {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 98vh;
-    width: 95%;
-    box-sizing: border-box;
+    gap: 6px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .timer-section {
-    background: #161616;
-    border: 1px solid #333;
-    border-radius: 8px;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
     padding: 6px;
-    flex: 0 0 auto;
 }
 
-.teams-input-box {
+/* Placar Integrado no Topo */
+.scoreboard-top-box {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: 3px;
-    gap: 10px;
-}
-
-.team-input-group {
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 5px;
-    font-size: 0.75rem;
+    background: #111;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 4px;
 }
-
-.team-input-group input {
-    background: #222;
-    border: 1px solid #444;
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    width: 100px;
-}
-
-.fouls-counter-box {
+.scoreboard-team-side {
     display: flex;
-    justify-content: space-around;
-    background: #1f1f1f;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 2px;
-    margin-bottom: 3px;
-    font-size: 0.75rem;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
 }
-
-.foul-team-indicator.limit-reached {
+.sb-team-name {
+    font-size: 0.75rem;
+    color: #aaa;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.sb-team-goals {
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: monospace;
+    color: #00ffcc;
+    line-height: 1.1;
+}
+.sb-team-side.away-side .sb-team-goals {
+    color: #ff5555;
+}
+.sb-team-fouls {
+    font-size: 0.65rem;
+    color: #ccc;
+    background: #222;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+}
+.sb-team-fouls.warning {
+    color: #ffc107;
+    font-weight: bold;
+}
+.sb-team-fouls.danger {
     color: #ff5555;
     font-weight: bold;
-    animation: pulse 1s infinite alternate;
+}
+.scoreboard-center-clock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1.2;
+    text-align: center;
+    border-left: 1px solid #2a2a2a;
+    border-right: 1px solid #2a2a2a;
+    padding: 0 4px;
 }
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    100% { opacity: 0.6; }
+.timer-config-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    color: #aaa;
+}
+.timer-config-row input {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 1px 3px;
 }
 
 .period-selector {
     display: flex;
-    justify-content: center;
+    gap: 6px;
+    margin-top: 5px;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 3px;
 }
-
 .period-btn {
-    background: #2b2b2b;
-    font-size: 0.8rem;
-    padding: 2px 8px;
+    flex: 1;
+    background: #222;
+    color: #aaa;
+    border: 1px solid #444;
+    padding: 5px;
+    font-size: 0.75rem;
     border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
 }
-
 .period-btn.active {
     background: #00ffcc;
     color: #000;
+    border-color: #00ffcc;
 }
 
 .report-buttons {
     display: flex;
     gap: 4px;
-    margin-left: 10px;
 }
-
-.btn-report-excel { background-color: #20c997; color: #000; font-size: 0.7rem; padding: 2px 6px; }
-.btn-report-pdf { background-color: #dc3545; color: #fff; font-size: 0.7rem; padding: 2px 6px; }
-
-.timer-box { text-align: center; }
-
-.timer-config-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: #aaa;
-    margin-bottom: 2px;
-}
-
-.timer-config-row input {
-    background: #222;
-    border: 1px solid #444;
+.btn-report-excel {
+    background: #198754;
     color: #fff;
-    width: 45px;
-    text-align: center;
-    border-radius: 3px;
-    font-size: 0.8rem;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
 }
+.btn-report-excel:hover { background: #157347; }
 
-.timer-box h2 {
-    font-size: 1.9rem;
-    margin: 1px 0;
-    color: #00ffcc;
-    letter-spacing: 2px;
+.btn-report-pdf {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
 }
+.btn-report-pdf:hover { background: #c82333; }
 
-.timer-controls {
+/* Botões Pro de Cronómetro */
+.timer-controls-pro {
     display: flex;
-    justify-content: center;
     gap: 6px;
+    margin-top: 6px;
 }
+.btn-start-pro {
+    flex: 1.5;
+    background-color: #28a745;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.95rem;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-start-pro:hover { background-color: #218838; }
 
-.btn-start { background-color: #198754 !important; }
-.btn-pause { background-color: #ffc107 !important; color: #000 !important; }
-.btn-reset { background-color: #dc3545 !important; }
+.btn-pause-pro {
+    flex: 1.5;
+    background-color: #ffc107;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.95rem;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-pause-pro:hover { background-color: #e0a800; }
+
+.btn-reset-pro {
+    flex: 1;
+    background-color: #dc3545;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-reset-pro:hover { background-color: #c82333; }
 
 .timeouts-container {
     display: flex;
-    justify-content: space-around;
-    font-size: 0.8rem;
-    margin-top: 3px;
-    border-top: 1px solid #2a2a2a;
-    padding-top: 3px;
+    gap: 8px;
+    margin-top: 5px;
 }
-
-.to-team { display: flex; align-items: center; gap: 6px; }
-.to-used { color: #00ffcc; font-weight: bold; }
-.to-used.used { color: #ff5555; }
-
-button {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    margin: 1px;
-    cursor: pointer;
+.to-team {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1f1f1f;
+    padding: 3px 6px;
     border-radius: 4px;
+    font-size: 0.72rem;
+}
+.to-team button {
+    background: #ffc107;
+    border: none;
+    color: #000;
     font-weight: bold;
-    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.68rem;
+}
+.to-team button:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+}
+.to-used {
+    color: #00ffcc;
+    font-weight: bold;
+}
+.to-used.used {
+    color: #ff5555;
 }
 
-button:hover { opacity: 0.9; }
-
+/* Painel de Estatísticas e Ações */
 .stats-panel {
     display: flex;
-    justify-content: space-between;
-    background: #151515;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 5px;
-    gap: 8px;
-    flex: 0 0 auto;
+    gap: 6px;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 6px;
 }
-
 .stats-team-col {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
-
 .stats-team-col h4 {
     margin: 0 0 2px 0;
-    font-size: 0.85rem;
+    font-size: 0.72rem;
+    text-align: center;
     color: #00ffcc;
 }
-
-.team-title-away { color: #ff5555 !important; }
+.stats-team-col:nth-child(3) h4 {
+    color: #ff5555;
+}
 
 .stat-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.75rem;
-    background: #1f1f1f;
-    padding: 2px 4px;
+    background: #1a1a1a;
+    padding: 4px 6px;
     border-radius: 4px;
+    font-size: 0.78rem;
 }
-
 .stat-buttons {
     display: flex;
     align-items: center;
     gap: 4px;
 }
-
 .stat-buttons button {
-    font-size: 0.7rem;
-    padding: 1px 5px;
-    background: #2b2b2b;
+    background: #333;
+    color: #fff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.stat-buttons button:hover {
+    background: #444;
+}
+.stat-buttons span {
+    font-family: monospace;
+    font-size: 0.9rem;
+    min-width: 20px;
+    text-align: center;
+    color: #ffcc00;
 }
 
 .stats-timeline {
-    flex: 1.1;
+    flex: 1.2;
     display: flex;
     flex-direction: column;
+    background: #1a1a1a;
+    border-radius: 4px;
+    padding: 4px 6px;
 }
-
 .stats-timeline h4 {
     margin: 0 0 2px 0;
-    font-size: 0.85rem;
-    color: #888;
+    font-size: 0.72rem;
+    text-align: center;
+    color: #aaa;
 }
-
+/* Registo de Ações com scroll independente */
 .log-box {
-    background: #0d0d0d;
-    border: 1px solid #252525;
-    border-radius: 6px;
-    height: 55px;
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 3px;
+    height: 70px;
+    max-height: 70px;
     overflow-y: auto;
-    text-align: left;
     padding: 4px;
-    font-size: 0.75rem;
-    font-family: monospace;
+    font-size: 0.68rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.log-entry {
+    border-bottom: 1px solid #1a1a1a;
+    padding-bottom: 2px;
 }
 
-.log-entry { margin-bottom: 2px; border-bottom: 1px dashed #1a1a1a; }
-
+/* Campos de Futsal com Proporção Real 20x10 (Aspect-Ratio 2:1) */
 .pitch-container-grid {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 0 0 auto;
 }
-
 .pitch-row {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 4px;
 }
-
 .half-pitch-wrapper {
     flex: 1;
-    text-align: center;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 3px;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
-
 .half-pitch-wrapper h3 {
     margin: 0 0 2px 0;
-    font-size: 0.75rem;
+    font-size: 0.62rem;
     color: #00ffcc;
 }
+.pitch-row:nth-child(2) .half-pitch-wrapper h3 {
+    color: #ffcc00;
+}
 
-/* Campos em Tom Bege Desportivo */
 .futsal-pitch {
     position: relative;
     width: 100%;
-    height: 100px;
-    background-color: #3b3630;
-    border: 2px solid #544c44;
-    border-radius: 6px;
-    cursor: pointer;
+    aspect-ratio: 2 / 1; /* Proporção exata 20x10 metros */
+    background-color: #1e3d2f;
+    border: 2px solid #ffffff;
+    border-radius: 4px;
     overflow: hidden;
+    cursor: crosshair;
+}
+.pitch-away-visual {
+    background-color: #3d1e1e;
 }
 
+/* Marcações nos Campos */
 .goal-semicircle-only {
     position: absolute;
     bottom: 0;
-    left: 30%;
-    width: 40%;
-    height: 28px;
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 40%;
+    border: 2px solid rgba(255, 255, 255, 0.7);
     border-bottom: none;
-    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    pointer-events: none;
 }
-
 .goal-semicircle-only.top-goal {
     bottom: auto;
     top: 0;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7);
     border-top: none;
-    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 50px;
+    border-bottom-right-radius: 50px;
 }
 
 .pitch-marker {
     position: absolute;
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    z-index: 5;
+    box-shadow: 0 0 4px #000;
 }
+.marker-shot { background-color: #ffcc00; }
+.marker-goal { background-color: #ff0055; width: 10px; height: 10px; border: 1px solid #fff; }
+.marker-p1 { border: 1px solid #000; }
+.marker-p2 { border: 2px dashed #fff; }
 
-/* Cores distintas para os marcadores no PDF por parte */
-.pitch-marker.marker-p1.marker-shot { background-color: #ffcc00; border: 1px solid #000; }
-.pitch-marker.marker-p1.marker-goal { background-color: #ff0055; border: 1px solid #fff; width: 11px; height: 11px; }
-
-.pitch-marker.marker-p2.marker-shot { background-color: #00d2ff; border: 1px solid #000; }
-.pitch-marker.marker-p2.marker-goal { background-color: #9400d3; border: 1px solid #fff; width: 11px; height: 11px; }
-
-/* Modal de Seleção de Atletas Casa */
+/* Modais de Seleção */
 .modal-backdrop {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.8);
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 10000;
 }
-
 .modal-content {
-    background: #1e1e1e;
+    background: #1a1a1a;
     border: 2px solid #00ffcc;
     border-radius: 8px;
-    padding: 15px;
-    width: 350px;
+    padding: 20px;
+    width: 320px;
     text-align: center;
 }
-
 .modal-content h3 {
     margin-top: 0;
-    color: #00ffcc;
     font-size: 1rem;
+    color: #00ffcc;
 }
-
 .modal-players-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin: 15px 0;
 }
-
 .mini-player-badge {
     background: #252525;
-    border: 2px solid #00ffcc;
+    border: 1px solid #00ffcc;
+    color: #fff;
+    padding: 10px 0;
     border-radius: 6px;
-    padding: 10px 5px;
-    color: #fff;
     font-weight: bold;
-    cursor: pointer;
     font-size: 0.95rem;
+    cursor: pointer;
 }
-
 .mini-player-badge:hover {
-    background: #112822;
+    background: #00ffcc;
+    color: #000;
 }
-
 .modal-close-btn {
-    background: #dc3545;
-    color: #fff;
+    background: #333;
+    color: #aaa;
     border: none;
-    padding: 6px 12px;
+    padding: 8px;
+    width: 100%;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
+    font-size: 0.8rem;
+}
+.modal-close-btn:hover {
+    background: #444;
+    color: #fff;
 }
 
+/* Rodapé */
 .app-footer {
     text-align: center;
-    font-size: 0.75rem;
-    color: #777;
-    border-top: 1px solid #2a2a2a;
-    padding-top: 2px;
+    font-size: 0.6rem;
+    color: #666;
+    padding: 1px 0;
+}
+
+@keyframes pulseRed {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.5; transform: scale(1.03); }
 }

@@ -8,157 +8,6 @@
     <link rel="stylesheet" href="style.css">
     <!-- Chart.js para os Gráficos Desportivos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Estilos específicos para o Ecrã de Login, Configuração e Placar no Topo */
-        #login-screen, #setup-game-screen, #roster-select-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #121212;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .login-card {
-            background-color: #1a1a1a;
-            border: 2px solid #00ffcc;
-            border-radius: 10px;
-            padding: 30px;
-            width: 380px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
-        }
-        .login-card h2 {
-            color: #00ffcc;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.4rem;
-        }
-        .login-input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .login-input-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-        .login-input-group input, .login-input-group select {
-            width: 100%;
-            padding: 10px;
-            background-color: #252525;
-            border: 1px solid #444;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 0.95rem;
-            box-sizing: border-box;
-        }
-        .login-input-group input:focus, .login-input-group select:focus {
-            border-color: #00ffcc;
-            outline: none;
-        }
-        .btn-login {
-            width: 100%;
-            background-color: #00ffcc;
-            color: #000;
-            font-weight: bold;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: 10px;
-        }
-        .btn-login:hover {
-            background-color: #00cca3;
-        }
-        .btn-secondary-action {
-            width: 100%;
-            background-color: #333;
-            color: #00ffcc;
-            font-weight: bold;
-            padding: 10px;
-            border: 1px solid #00ffcc;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            margin-top: 8px;
-        }
-        .btn-secondary-action:hover {
-            background-color: #444;
-        }
-        #login-error {
-            color: #ff5555;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            min-height: 18px;
-        }
-
-        /* Estilo do Placar Integrado no Topo */
-        .scoreboard-top-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #111;
-            border: 2px solid #333;
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin-bottom: 6px;
-        }
-        .scoreboard-team-side {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-        }
-        .sb-team-name {
-            font-size: 0.8rem;
-            color: #aaa;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .sb-team-goals {
-            font-size: 2.2rem;
-            font-weight: bold;
-            font-family: monospace;
-            color: #00ffcc;
-            line-height: 1.1;
-        }
-        .sb-team-side.away-side .sb-team-goals {
-            color: #ff5555;
-        }
-        .sb-team-fouls {
-            font-size: 0.7rem;
-            color: #ccc;
-            background: #222;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 2px;
-        }
-        .sb-team-fouls.warning {
-            color: #ffc107;
-            font-weight: bold;
-        }
-        .sb-team-fouls.danger {
-            color: #ff5555;
-            font-weight: bold;
-            animation: pulse 1s infinite alternate;
-        }
-        .scoreboard-center-clock {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1.2;
-            text-align: center;
-            border-left: 1px solid #2a2a2a;
-            border-right: 1px solid #2a2a2a;
-            padding: 0 5px;
-        }
-    </style>
 </head>
 <body>
 
@@ -221,7 +70,7 @@
             <button class="btn-login" onclick="proceedToRosterSetup()">Selecionar Plantel & Avançar</button>
             
             <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; text-align: center;">
-                <label for="import-config-file" class="btn-secondary-action" style="display: block; text-align: center; padding: 10px; box-sizing: border-box;">Carregar Jogo</label>
+                <label for="import-config-file" class="btn-secondary-action" style="display: block; text-align: center; padding: 10px; box-sizing: border-box; cursor: pointer;">Carregar Sessão - Jogo Guardada</label>
                 <input type="file" id="import-config-file" accept=".json" style="display: none;" onchange="importGameConfigJSON(event)">
             </div>
         </div>
@@ -238,7 +87,7 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-secondary-action" style="margin-top: 0;" onclick="exportGameConfigJSON()">Guardar Jogo</button>
+                <button class="btn-secondary-action" style="margin-top: 0;" onclick="exportGameConfigJSON()">Guardar Sessão - Jogo</button>
                 <button class="btn-login" style="margin-top: 0; flex: 1;" onclick="confirmGameRoster()">Avançar para o Jogo</button>
             </div>
         </div>
@@ -247,8 +96,11 @@
     <!-- PAINEL PRINCIPAL -->
     <div class="main-layout" id="main-app" style="display: none;">
         <div class="left-panel">
-            <div class="panel-header">
-                <h3 id="home-team-title">Plantel / Jogadores (DINAMO)</h3>
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 id="home-team-title" style="margin: 0;">Plantel / Jogadores (DINAMO)</h3>
+                    <span id="logged-user-display" style="font-size: 0.75rem; color: #00ffcc; font-weight: bold;">👤 Utilizador: --</span>
+                </div>
                 <div class="header-right-actions">
                     <button class="btn-tab active" onclick="switchLeftTab('plantel')">Atletas</button>
                     <button class="btn-tab" onclick="switchLeftTab('graficos')">Gráficos</button>
@@ -257,7 +109,7 @@
 
             <div class="session-actions-box">
                 <button class="btn-session-save" onclick="exportSessionJSON()">Guardar Sessão (JSON)</button>
-                <label for="json-file" class="btn-session-load">Importar Sessão (JSON)</label>
+                <label for="json-file" class="btn-session-load" style="cursor:pointer;">Importar Sessão (JSON)</label>
                 <input type="file" id="json-file" accept=".json" onchange="importSessionJSON(event)">
             </div>
 
@@ -302,7 +154,13 @@
                             <span class="sb-team-fouls" id="sb-home-fouls">Faltas: 0/5</span>
                         </div>
                         <div class="scoreboard-center-clock">
-                            <h2 id="timer" style="font-size: 1.7rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
+                            <h2 id="timer" style="font-size: 1.9rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
+                            
+                            <!-- CONTADOR DE EXCLUSÃO TEMPORÁRIA (CARTÃO VERMELHO - 2 MINUTOS) -->
+                            <div id="red-card-timer-box" style="display: none; margin-top: 4px; background: rgba(255, 85, 85, 0.2); border: 1px solid #ff5555; padding: 2px 8px; border-radius: 4px;">
+                                <span id="red-card-timer-text" style="font-size: 0.8rem; color: #ff5555; font-weight: bold; animation: pulseRed 0.8s infinite alternate;">🟥 EXCLUSÃO: 02:00</span>
+                            </div>
+
                             <div class="timer-config-row" style="margin:2px 0 0 0;">
                                 <label for="timer-duration">Min:</label>
                                 <input type="number" id="timer-duration" value="20" min="1" max="60" onchange="changeTimerDuration()" style="width:35px; text-align:center;">
@@ -324,10 +182,11 @@
                         </div>
                     </div>
 
-                    <div class="timer-controls" style="margin-top: 4px;">
-                        <button class="btn-start" onclick="startTimer()">Iniciar</button>
-                        <button class="btn-pause" onclick="pauseTimer()">Pausar</button>
-                        <button class="btn-reset" onclick="resetTimer()">Reiniciar</button>
+                    <!-- BOTÕES DE CRONÓMETRO MAIORES -->
+                    <div class="timer-controls-pro">
+                        <button class="btn-start-pro" onclick="startTimer()">Iniciar</button>
+                        <button class="btn-pause-pro" onclick="pauseTimer()">Pausar</button>
+                        <button class="btn-reset-pro" onclick="resetTimer()">Reiniciar</button>
                     </div>
 
                     <div class="timeouts-container">
@@ -344,6 +203,7 @@
                     </div>
                 </div>
 
+                <!-- Painel de Estatísticas / Ações -->
                 <div class="stats-panel">
                     <div class="stats-team-col">
                         <h4 class="team-title-home" id="stats-home-title">DINAMO</h4>
@@ -407,7 +267,7 @@
                     </div>
                 </div>
 
-                <!-- 4 Campos -->
+                <!-- 4 Campos com Proporções 20x10 -->
                 <div class="pitch-container-grid" id="capture-pitch-container">
                     <div class="pitch-row">
                         <div class="half-pitch-wrapper">
@@ -461,7 +321,8 @@
     <script src="users.js"></script>
 
     <script>
-        let loadedConfigData = null; // Guarda os dados se importados por JSON
+        let loadedConfigData = null;
+        let loggedInUsername = "Treinador";
 
         async function handleLogin() {
             let userIn = document.getElementById('login-user').value.trim();
@@ -476,6 +337,12 @@
             let validUser = globalUsersList.find(u => u.username === userIn && u.password === passIn);
 
             if (validUser) {
+                loggedInUsername = validUser.username;
+                let userDisplay = document.getElementById('logged-user-display');
+                if (userDisplay) {
+                    userDisplay.innerText = `👤 Utilizador: ${loggedInUsername.toUpperCase()}`;
+                }
+
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('setup-game-screen').style.display = 'flex';
                 document.getElementById('setup-date').valueAsDate = new Date();
@@ -485,7 +352,7 @@
         }
 
         function onSetupEscalaoChange() {
-            loadedConfigData = null; // Reseta se mudar o escalão manualmente
+            loadedConfigData = null;
         }
 
         function proceedToRosterSetup() {
@@ -653,7 +520,6 @@
         }
     </script>
 
-    <!-- Bibliotecas de Relatórios e Lógica Principal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
