@@ -356,7 +356,7 @@ function modifyStat(team, actionType, delta) {
 }
 
 // -------------------------------------------------------------
-// REGISTOS NOS CAMPOS (CASA = PEDE ATLETA | VISITANTE = DIRETO)
+// REGISTOS NOS CAMPOS
 // -------------------------------------------------------------
 function handlePitchDoubleClick(event, side, type) {
     const pitch = event.currentTarget;
@@ -370,7 +370,7 @@ function handlePitchDoubleClick(event, side, type) {
     let teamKey = side; 
     let teamName = side === 'home' ? homeName : awayName;
 
-    // Se for qualquer ação (Remate ou Golo) da equipa da casa, abre o modal de atletas
+    // Se for do lado da casa (Remate ou Golo), abre o modal de atletas
     if (side === 'home') {
         let activePlayers = players.filter(p => p.isOnField);
         if (activePlayers.length > 0) {
@@ -624,7 +624,7 @@ function exportReportExcel() {
         ["Estatísticas Coletivas", "1ª Parte (Dinamo)", "1ª Parte (Visitante)", "2ª Parte (Dinamo)", "2ª Parte (Visitante)", "Total (Dinamo)", "Total (Visitante)"],
         ["Golos", s1.home.golos, s1.away.golos, s2.home.golos, s2.away.golos, s1.home.golos + s2.home.golos, s1.away.golos + s2.away.golos],
         ["Remates", s1.home.remates, s1.away.remates, s2.home.remates, s2.away.remates, s1.home.remates + s2.home.remates, s1.away.remates + s2.away.remates],
-        ["Faltas", s1.home.livres, s1.away.livres, s2.home.livres, s2.away.livres, s1.home.livres + s2.home.livres, s1.away.livres + s2.away.livres],
+        ["Faltas/Livres", s1.home.livres, s1.away.livres, s2.home.livres, s2.away.livres, s1.home.livres + s2.home.livres, s1.away.livres + s2.away.livres],
         ["Cantos", s1.home.cantos, s1.away.cantos, s2.home.cantos, s2.away.cantos, s1.home.cantos + s2.home.cantos, s1.away.cantos + s2.away.cantos],
         ["Lançamentos", s1.home.lancamentos, s1.away.lancamentos, s2.home.lancamentos, s2.away.lancamentos, s1.home.lancamentos + s2.home.lancamentos, s1.away.lancamentos + s2.away.lancamentos],
         ["Perdas de Posse", s1.home.posse, s1.away.posse, s2.home.posse, s2.away.posse, s1.home.posse + s2.home.posse, s1.away.posse + s2.away.posse],
@@ -700,7 +700,7 @@ async function exportReportPDF() {
     y += 6;
     doc.setFont("helvetica", "normal");
     doc.text(`- Golos: Dinamo (${s1.home.golos}|${s2.home.golos}|${s1.home.golos+s2.home.golos}) x Visitante (${s1.away.golos}|${s2.away.golos}|${s1.away.golos+s2.away.golos})`, 14, y); y += 5;
-    doc.text(`- Faltas: Dinamo (${s1.home.livres}|${s2.home.livres}|${s1.home.livres+s2.home.livres}) x Visitante (${s1.away.livres}|${s2.away.livres}|${s1.away.livres+s2.away.livres})`, 14, y); y += 5;
+    doc.text(`- Faltas/Livres: Dinamo (${s1.home.livres}|${s2.home.livres}|${s1.home.livres+s2.home.livres}) x Visitante (${s1.away.livres}|${s2.away.livres}|${s1.away.livres+s2.away.livres})`, 14, y); y += 5;
     doc.text(`- Cantos: Dinamo (${s1.home.cantos}|${s2.home.cantos}|${s1.home.cantos+s2.home.cantos}) x Visitante (${s1.away.cantos}|${s2.away.cantos}|${s1.away.cantos+s2.away.cantos})`, 14, y); y += 10;
 
     doc.setFont("helvetica", "bold");

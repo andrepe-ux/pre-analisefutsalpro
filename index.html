@@ -207,7 +207,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE PRÉ-SELEÇÃO E EDIÇÃO DE ATLETAS (MAX 20 LISTADOS, MAX 14 SELECIONADOS) -->
+    <!-- MODAL DE PRÉ-SELEÇÃO E EDIÇÃO DE ATLETAS -->
     <div id="roster-select-modal" style="display: none;">
         <div class="login-card" style="width: 640px; text-align: left; border-color: #00ffcc;">
             <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">Selecione / Edite o Plantel (<span id="roster-count">0</span>/14 selecionados)</h3>
@@ -221,9 +221,8 @@
         </div>
     </div>
 
-    <!-- PAINEL PRINCIPAL (Oculto inicialmente) -->
+    <!-- PAINEL PRINCIPAL -->
     <div class="main-layout" id="main-app" style="display: none;">
-        <!-- Lado Esquerdo: 50% - Grelha de Atletas e Gráficos -->
         <div class="left-panel">
             <div class="panel-header">
                 <h3 id="home-team-title">Plantel / Jogadores (DINAMO)</h3>
@@ -233,26 +232,20 @@
                 </div>
             </div>
 
-            <!-- Secção de Gestão de Sessão (JSON) -->
             <div class="session-actions-box">
                 <button class="btn-session-save" onclick="exportSessionJSON()">Guardar Sessão (JSON)</button>
                 <label for="json-file" class="btn-session-load">Importar Sessão (JSON)</label>
                 <input type="file" id="json-file" accept=".json" onchange="importSessionJSON(event)">
             </div>
 
-            <!-- Aba 1: Grelha de Atletas -->
             <div id="tab-plantel" class="tab-content active">
-                <div class="players-grid-container" id="players-container">
-                    <!-- Preenchido via JavaScript -->
-                </div>
-                <!-- Campo de Observações do Jogo -->
+                <div class="players-grid-container" id="players-container"></div>
                 <div class="observations-box">
                     <label for="match-observations"><b>Observações do Jogo:</b></label>
                     <textarea id="match-observations" placeholder="Notas táticas, arbitragem, lesões, etc..."></textarea>
                 </div>
             </div>
 
-            <!-- Aba 2: Gráficos Desportivos -->
             <div id="tab-graficos" class="tab-content">
                 <div class="charts-container">
                     <div class="chart-wrapper">
@@ -271,18 +264,14 @@
             </div>
         </div>
 
-        <!-- Lado Direito: 50% - Controlo, Relatórios, Campos e Estatísticas -->
         <div class="right-panel">
             <div class="scoreboard-container">
-                
-                <!-- Secção do Placar, Cronômetro, Períodos e Nomes das Equipas -->
                 <div class="timer-section">
                     <div class="teams-input-box" style="display:none;">
                         <input type="text" id="input-home-name" value="DINAMO">
                         <input type="text" id="input-away-name" value="VISITANTE">
                     </div>
 
-                    <!-- PLACAR PRINCIPAL NO TOPO -->
                     <div class="scoreboard-top-box">
                         <div class="scoreboard-team-side">
                             <span class="sb-team-name" id="sb-home-label">DINAMO</span>
@@ -306,7 +295,6 @@
                     <div class="period-selector">
                         <button id="btn-p1" class="period-btn active" onclick="switchPeriod(1)">1º Período</button>
                         <button id="btn-p2" class="period-btn" onclick="switchPeriod(2)">2º Período</button>
-                        <!-- Botões de Relatório -->
                         <div class="report-buttons">
                             <button class="btn-report-excel" onclick="exportReportExcel()">Excel</button>
                             <button class="btn-report-pdf" onclick="exportReportPDF()">PDF</button>
@@ -333,12 +321,11 @@
                     </div>
                 </div>
 
-                <!-- Painel de Estatísticas / Ações com botões + e - -->
                 <div class="stats-panel">
                     <div class="stats-team-col">
                         <h4 class="team-title-home" id="stats-home-title">DINAMO</h4>
                         <div class="stat-row">
-                            <span>Faltas</span>
+                            <span>Faltas/Livres</span>
                             <div class="stat-buttons"><button onclick="modifyStat('home', 'livres', -1)">-</button><span id="home-livres">0</span><button onclick="modifyStat('home', 'livres', 1)">+</button></div>
                         </div>
                         <div class="stat-row">
@@ -372,7 +359,7 @@
                         <h4 class="team-title-away" id="stats-away-title">VISITANTE</h4>
                         <div class="stat-row">
                             <div class="stat-buttons"><button onclick="modifyStat('away', 'livres', -1)">-</button><span id="away-livres">0</span><button onclick="modifyStat('away', 'livres', 1)">+</button></div>
-                            <span>Faltas</span>
+                            <span>Faltas/Livres</span>
                         </div>
                         <div class="stat-row">
                             <div class="stat-buttons"><button onclick="modifyStat('away', 'cantos', -1)">-</button><span id="away-cantos">0</span><button onclick="modifyStat('away', 'cantos', 1)">+</button></div>
@@ -397,7 +384,7 @@
                     </div>
                 </div>
 
-                <!-- 4 Campos (Tema Bege Desportivo) com parâmetros corretos ('home' e 'away') -->
+                <!-- 4 Campos -->
                 <div class="pitch-container-grid" id="capture-pitch-container">
                     <div class="pitch-row">
                         <div class="half-pitch-wrapper">
@@ -430,11 +417,9 @@
                     </div>
                 </div>
 
-                <!-- Rodapé Profissional -->
                 <footer class="app-footer">
                     andrepe @ 2026
                 </footer>
-
             </div>
         </div>
     </div>
@@ -448,7 +433,10 @@
         </div>
     </div>
 
-    <!-- Script de Login e Configuração -->
+    <!-- Scripts de Dados Externos -->
+    <script src="plantels.js"></script>
+    <script src="users.js"></script>
+
     <script>
         async function handleLogin() {
             let userIn = document.getElementById('login-user').value.trim();
@@ -460,14 +448,7 @@
                 return;
             }
 
-            let usersList = [
-                { username: "andre", password: "123" },
-                { username: "treinador", password: "futsal2026" },
-                { username: "Martim", password: "martim27" },
-                { username: "AnaPereira", password: "Ana13__" }
-            ];
-
-            let validUser = usersList.find(u => u.username === userIn && u.password === passIn);
+            let validUser = globalUsersList.find(u => u.username === userIn && u.password === passIn);
 
             if (validUser) {
                 document.getElementById('login-screen').style.display = 'none';
@@ -477,24 +458,6 @@
                 errorEl.innerText = "Utilizador ou palavra-passe incorretos.";
             }
         }
-
-        const globalPlantelsData = {
-            "escaloes": {
-                "Sub 15": {
-                    "Dinamo": [
-                        { "number": 27, "name": "Martim Pereira" },
-                        { "number": 14, "name": "Bernardo Vasconcelos" }
-                    ]
-                },
-                "Sub 19": {
-                    "Dinamo": [
-                        { "number": 27, "name": "Martim Pereira" },
-                        { "number": 14, "name": "Bernardo Vasconcelos" },
-                        { "number": 17, "name": "Tiago Marcelino" }
-                    ]
-                }
-            }
-        };
 
         function finalizeGameSetup() {
             let awayName = document.getElementById('setup-away').value.trim() || 'Visitante';
@@ -595,7 +558,7 @@
         }
     </script>
 
-    <!-- Bibliotecas SheetJS (Excel), jsPDF (PDF) e html2canvas -->
+    <!-- Bibliotecas de Relatórios e Lógica Principal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
