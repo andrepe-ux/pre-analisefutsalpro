@@ -1,0 +1,18 @@
+{
+  "escaloes": {
+    "Sub 15": {
+      "Dinamo": [
+        { "number": 27, "name": "Martim Pereira" },
+        { "number": 14, "name": "Bernardo Vasconcelos" }
+      ]
+    },
+    "Sub 19": {
+      "Dinamo": [
+        { "number": 27, "name": "Martim Pereira" },
+        { "number": 14, "name": "Bernardo Vasconcelos" },
+        { "number": 17, "name": "Tiago Marcelino" },
+        { "number": 2, "name": "Vasco Lino" }
+      ]
+    }
+  }
+}
