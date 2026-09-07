@@ -370,7 +370,6 @@ function handlePitchDoubleClick(event, side, type) {
     let teamKey = side; 
     let teamName = side === 'home' ? homeName : awayName;
 
-    // Se for do lado da casa (Remate ou Golo), abre o modal de atletas
     if (side === 'home') {
         let activePlayers = players.filter(p => p.isOnField);
         if (activePlayers.length > 0) {
@@ -629,7 +628,7 @@ function exportReportExcel() {
         ["Lançamentos", s1.home.lancamentos, s1.away.lancamentos, s2.home.lancamentos, s2.away.lancamentos, s1.home.lancamentos + s2.home.lancamentos, s1.away.lancamentos + s2.away.lancamentos],
         ["Perdas de Posse", s1.home.posse, s1.away.posse, s2.home.posse, s2.away.posse, s1.home.posse + s2.home.posse, s1.away.posse + s2.away.posse],
         ["Passes Falhados", s1.home.passes_falhados, s1.away.passes_falhados, s2.home.passes_falhados, s2.away.passes_falhados, s1.home.passes_falhados + s2.home.passes_falhados, s1.away.passes_falhados + s2.away.passes_falhados],
-        ["Passes Certos", s1.home.passes_completos, s1.away.passes_completos, s2.home.passes_completos, s2.away.passes_completos, s1.home.passes_completos + s2.home.passes_completos, s1.home.passes_completos + s2.home.passes_completos]
+        ["Passes Certos", s1.home.passes_completos, s1.away.passes_completos, s2.home.passes_completos, s2.away.passes_completos, s1.home.passes_completos + s2.home.passes_completos, s1.away.passes_completos + s2.away.passes_completos]
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumoData), "Resumo");
 
