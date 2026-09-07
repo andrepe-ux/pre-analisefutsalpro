@@ -10,9 +10,12 @@ body {
     color: #e0e0e0;
     font-family: Arial, sans-serif;
     height: 100vh;
+    width: 100vw;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Reduz ligeiramente a escala global no GitHub Pages para não abrir gigante */
+    zoom: 90%; 
 }
 
 /* Ecrãs de Login e Modais */
@@ -27,6 +30,7 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    zoom: normal; /* Mantém os modais no tamanho normal de leitura */
 }
 .login-card {
     background-color: #1a1a1a;
@@ -214,7 +218,7 @@ input[type="file"] {
     background: #222;
     border: 1px solid #333;
     border-radius: 6px;
-    padding: 6px;
+    padding: 5px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -235,41 +239,39 @@ input[type="file"] {
     gap: 4px;
     align-items: center;
 }
-/* Tamanho do número do atleta aumentado 2x (aprox 1.5rem) */
 .player-num-input {
-    width: 44px;
+    width: 38px;
     background: #111;
     color: #ffcc00;
     border: 1px solid #444;
     text-align: center;
     font-weight: bold;
-    font-size: 1.45rem; 
+    font-size: 1.25rem; 
     border-radius: 3px;
     padding: 2px;
 }
-/* Tamanho do nome do atleta aumentado 2x (aprox 1.3rem) */
 .player-name-input {
     flex: 1;
     background: #111;
     color: #fff;
     border: 1px solid #444;
-    font-size: 1.25rem; 
-    padding: 4px 6px;
+    font-size: 1.1rem; 
+    padding: 3px 5px;
     border-radius: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Relógios sobrepostos verticalmente e aumentados 2x */
+/* Relógios sobrepostos verticalmente */
 .tile-timers-box {
     display: flex;
     flex-direction: column; 
     gap: 2px;
     background: #181818;
-    padding: 5px 8px;
+    padding: 4px 6px;
     border-radius: 4px;
-    margin: 4px 0;
+    margin: 3px 0;
 }
 .tile-timer-row {
     display: flex;
@@ -277,12 +279,11 @@ input[type="file"] {
     align-items: center;
 }
 .tile-time-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #888;
 }
-/* Tamanho dos relógios aumentado 2x (aprox 1.4rem) */
 .tile-time-val {
-    font-size: 1.35rem; 
+    font-size: 1.2rem; 
     font-family: monospace;
     font-weight: bold;
 }
@@ -312,7 +313,7 @@ input[type="file"] {
 .red-sq { background: #dc3545; color: #fff; }
 
 .tile-status-badge {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: bold;
     color: #aaa;
 }
