@@ -13,7 +13,8 @@ const globalPlantelsData = {
                 { "number": 27, "name": "Martim Pereira" },
                 { "number": 14, "name": "Bernardo Vasconcelos" },
                 { "number": 17, "name": "Tiago Marcelino" },
-                { "number": 1, "name": "João Matos" }
+                { "number": 1, "name": "João Matos" },
+                { "number": 2, "name": "Vasco Lino" }
             ]
         }
     }
