@@ -27,7 +27,7 @@
             border: 2px solid #00ffcc;
             border-radius: 10px;
             padding: 30px;
-            width: 340px;
+            width: 380px;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
         }
@@ -75,6 +75,21 @@
         }
         .btn-login:hover {
             background-color: #00cca3;
+        }
+        .btn-secondary-action {
+            width: 100%;
+            background-color: #333;
+            color: #00ffcc;
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+        .btn-secondary-action:hover {
+            background-color: #444;
         }
         #login-error {
             color: #ff5555;
@@ -197,27 +212,35 @@
 
             <div class="login-input-group">
                 <label>Escalão:</label>
-                <select id="setup-escalao">
+                <select id="setup-escalao" onchange="onSetupEscalaoChange()">
                     <option value="Sub 15">Sub 15</option>
                     <option value="Sub 19">Sub 19</option>
                 </select>
             </div>
 
-            <button class="btn-login" onclick="finalizeGameSetup()">Carregar Plantel & Avançar</button>
+            <button class="btn-login" onclick="proceedToRosterSetup()">Selecionar Plantel & Avançar</button>
+            
+            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; text-align: center;">
+                <label for="import-config-file" class="btn-secondary-action" style="display: block; text-align: center; padding: 10px; box-sizing: border-box;">Carregar Configuração Guardada (JSON)</label>
+                <input type="file" id="import-config-file" accept=".json" style="display: none;" onchange="importGameConfigJSON(event)">
+            </div>
         </div>
     </div>
 
     <!-- MODAL DE PRÉ-SELEÇÃO E EDIÇÃO DE ATLETAS -->
     <div id="roster-select-modal" style="display: none;">
         <div class="login-card" style="width: 640px; text-align: left; border-color: #00ffcc;">
-            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">Selecione / Edite o Plantel (<span id="roster-count">0</span>/14 selecionados)</h3>
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;" id="roster-modal-title">Selecione / Edite o Plantel (<span id="roster-count">0</span>/14 selecionados)</h3>
             <p style="font-size: 0.78rem; color: #aaa; text-align: center; margin-bottom: 12px;">Podes ter até 20 atletas no plantel, mas só podes selecionar no máximo 14 para o jogo.</p>
             
             <div id="roster-editable-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; padding-right: 5px;">
                 <!-- Preenchido dinamicamente -->
             </div>
 
-            <button class="btn-login" style="margin-top: 15px;" onclick="confirmGameRoster()">Iniciar Partida com Atletas Selecionados</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-secondary-action" style="margin-top: 0;" onclick="exportGameConfigJSON()">Guardar Config. JSON</button>
+                <button class="btn-login" style="margin-top: 0; flex: 1;" onclick="confirmGameRoster()">Avançar para o Jogo</button>
+            </div>
         </div>
     </div>
 
@@ -438,6 +461,8 @@
     <script src="users.js"></script>
 
     <script>
+        let loadedConfigData = null; // Guarda os dados se importados por JSON
+
         async function handleLogin() {
             let userIn = document.getElementById('login-user').value.trim();
             let passIn = document.getElementById('login-pass').value.trim();
@@ -459,7 +484,11 @@
             }
         }
 
-        function finalizeGameSetup() {
+        function onSetupEscalaoChange() {
+            loadedConfigData = null; // Reseta se mudar o escalão manualmente
+        }
+
+        function proceedToRosterSetup() {
             let awayName = document.getElementById('setup-away').value.trim() || 'Visitante';
             let local = document.getElementById('setup-location').value.trim();
             let escalao = document.getElementById('setup-escalao').value;
@@ -472,9 +501,14 @@
 
             updateTeamNames();
 
-            let teamRoster = (globalPlantelsData.escaloes[escalao] && globalPlantelsData.escaloes[escalao]["Dinamo"]) 
-                ? globalPlantelsData.escaloes[escalao]["Dinamo"] 
-                : [];
+            let teamRoster = [];
+            if (loadedConfigData && loadedConfigData.roster) {
+                teamRoster = loadedConfigData.roster;
+            } else {
+                teamRoster = (globalPlantelsData.escaloes[escalao] && globalPlantelsData.escaloes[escalao]["Dinamo"]) 
+                    ? globalPlantelsData.escaloes[escalao]["Dinamo"] 
+                    : [];
+            }
 
             showEditableRosterModal(teamRoster);
         }
@@ -486,7 +520,7 @@
 
             for (let i = 0; i < 20; i++) {
                 let p = roster[i];
-                let isChecked = p ? true : false;
+                let isChecked = p ? (p.selected !== false) : false;
                 let numVal = p ? p.number : (i + 1);
                 let nameVal = p ? p.name : `Atleta ${i + 1}`;
 
@@ -514,6 +548,67 @@
             if (count > 14) {
                 alert("Atenção: No máximo só podes selecionar 14 atletas para o jogo!");
             }
+        }
+
+        function exportGameConfigJSON() {
+            let awayName = document.getElementById('setup-away').value.trim() || 'Visitante';
+            let local = document.getElementById('setup-location').value.trim();
+            let escalao = document.getElementById('setup-escalao').value;
+            let dataJogo = document.getElementById('setup-date').value;
+            let horaJogo = document.getElementById('setup-time').value;
+
+            let currentRosterConfig = [];
+            for (let i = 0; i < 20; i++) {
+                let chk = document.getElementById(`check-p-${i}`);
+                let num = parseInt(document.getElementById(`num-p-${i}`).value) || (i + 1);
+                let name = document.getElementById(`name-p-${i}`).value.trim() || `Atleta ${i + 1}`;
+                if (chk) {
+                    currentRosterConfig.push({ number: num, name: name, selected: chk.checked });
+                }
+            }
+
+            let configData = {
+                homeName: "Dinamo",
+                awayName: awayName,
+                location: local,
+                escalao: escalao,
+                date: dataJogo,
+                time: horaJogo,
+                roster: currentRosterConfig
+            };
+
+            let jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", jsonStr);
+            downloadAnchor.setAttribute("download", `Dinamo_vs_${awayName}_${dataJogo}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importGameConfigJSON(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = JSON.parse(e.target.result);
+                    loadedConfigData = data;
+
+                    if (data.awayName) document.getElementById('setup-away').value = data.awayName;
+                    if (data.location) document.getElementById('setup-location').value = data.location;
+                    if (data.escalao) document.getElementById('setup-escalao').value = data.escalao;
+                    if (data.date) document.getElementById('setup-date').value = data.date;
+                    if (data.time) document.getElementById('setup-time').value = data.time;
+
+                    alert("Configuração e plantel carregados com sucesso! Podes rever os dados e avançar.");
+                } catch (err) {
+                    alert("Erro ao ler o ficheiro JSON de configuração.");
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
         }
 
         function confirmGameRoster() {
