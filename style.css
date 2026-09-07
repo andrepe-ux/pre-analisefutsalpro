@@ -1,4 +1,4 @@
-/* style.css - Análise Futsal PRO */
+/* style.css - Análise Futsal PRO (Responsivo / Auto-ajustável) */
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -9,13 +9,22 @@ body {
     background-color: #121212;
     color: #e0e0e0;
     font-family: Arial, sans-serif;
-    height: 100vh;
     width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Contentor que escala proporcionalmente e automaticamente ao ecrã */
+#app-scaler {
+    width: 1280px;
+    height: 720px;
+    transform-origin: center center;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    /* Reduz ligeiramente a escala global no GitHub Pages para não abrir gigante */
-    zoom: 90%; 
+    position: relative;
 }
 
 /* Ecrãs de Login e Modais */
@@ -30,7 +39,6 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    zoom: normal; /* Mantém os modais no tamanho normal de leitura */
 }
 .login-card {
     background-color: #1a1a1a;
@@ -111,8 +119,8 @@ body {
 /* Layout Principal */
 .main-layout {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     gap: 8px;
     padding: 8px;
     box-sizing: border-box;
@@ -128,7 +136,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 8px;
-    height: calc(100vh - 16px);
+    height: 100%;
 }
 
 .panel-header {
@@ -374,7 +382,7 @@ input[type="file"] {
     flex: 1.5;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 16px);
+    height: 100%;
 }
 
 .scoreboard-container {
@@ -681,7 +689,6 @@ input[type="file"] {
     text-align: center;
     color: #aaa;
 }
-/* Registo de Ações com scroll independente */
 .log-box {
     flex: 1;
     background: #111;
@@ -733,7 +740,7 @@ input[type="file"] {
 .futsal-pitch {
     position: relative;
     width: 100%;
-    aspect-ratio: 2 / 1; /* Proporção exata 20x10 metros */
+    aspect-ratio: 2 / 1;
     background-color: #1e3d2f;
     border: 2px solid #ffffff;
     border-radius: 4px;
@@ -744,7 +751,6 @@ input[type="file"] {
     background-color: #3d1e1e;
 }
 
-/* Marcações nos Campos */
 .goal-semicircle-only {
     position: absolute;
     bottom: 0;
@@ -783,7 +789,6 @@ input[type="file"] {
 .marker-p1 { border: 1px solid #000; }
 .marker-p2 { border: 2px dashed #fff; }
 
-/* Modais de Seleção */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -844,7 +849,6 @@ input[type="file"] {
     color: #fff;
 }
 
-/* Rodapé */
 .app-footer {
     text-align: center;
     font-size: 0.6rem;
