@@ -236,6 +236,7 @@ function startTimer() {
                 totalSeconds--;
                 updateTimerDisplay();
 
+                // Lógica do temporizador de exclusão (Vermelho - 2 min)
                 if (redCardActive && redCardSecondsRemaining > 0) {
                     redCardSecondsRemaining--;
                     updateRedCardTimerDisplay();
@@ -354,172 +355,8 @@ function updateStatsDisplay() {
 }
 
 // -------------------------------------------------------------
-// GESTÃO DE JOGADORES, CARTÕES E VALIDAÇÃO (3 A 5 JOGADORES)
+// ESTATÍSTICAS COM BOTÕES + E -
 // -------------------------------------------------------------
-function togglePlayerField(index) {
-    let player = players[index];
-    
-    // Regra: Jogador expulso (vermelho) não pode voltar a entrar no jogo
-    if (player.redCards > 0 && !player.isOnField) {
-        alert("Atenção: Este jogador foi expulso (cartão vermelho) e não pode voltar a entrar no jogo!");
-        return;
-    }
-
-    let currentFieldCount = players.filter(p => p.isOnField).length;
-
-    if (!player.isOnField) {
-        if (redCardActive && currentFieldCount >= 4) {
-            alert("Atenção: Com jogador expulso, só podes ter no máximo 4 atletas em campo até terminar a penalização de 2 minutos!");
-            return;
-        }
-        if (currentFieldCount >= 5) {
-            alert("Erro: No máximo podem estar 5 jogadores em campo!");
-            return;
-        }
-        player.isOnField = true;
-        player.substitutionsCount++;
-    } else {
-        if (currentFieldCount <= 3) {
-            alert("Erro: É obrigatório ter no mínimo 3 jogadores em campo!");
-            return;
-        }
-        player.isOnField = false;
-    }
-    renderPlayersList();
-}
-
-function updatePlayerNumber(index, newNum) { players[index].number = newNum; }
-function updatePlayerName(index, newName) { players[index].name = newName; }
-
-function addCard(event, index, cardType) {
-    event.stopPropagation();
-    let player = players[index];
-    let teamName = document.getElementById('input-home-name').value || 'DINAMO';
-    
-    if (cardType === 'yellow') {
-        player.yellowCards++;
-        logAction(teamName.toUpperCase(), `Cartão Amarelo: #${player.number} ${player.name}`, null, null);
-        
-        // 2 Cartões Amarelos = Vermelho Automático e Exclusão de 2 min
-        if (player.yellowCards >= 2) {
-            player.redCards++;
-            if (player.isOnField) {
-                let fieldCount = players.filter(p => p.isOnField).length;
-                if (fieldCount <= 3) {
-                    alert("Atenção: O atleta atingiu o 2º amarelo, mas a equipa ficaria com menos de 3 jogadores em campo!");
-                    player.yellowCards--;
-                    player.redCards--;
-                    return;
-                }
-                player.isOnField = false;
-            }
-            triggerRedCardExclusion();
-            logAction(teamName.toUpperCase(), `🟥 2º Amarelo (Vermelho / Exclusão 2 min): #${player.number} ${player.name}`, null, null);
-        }
-    } else if (cardType === 'red') {
-        player.redCards++;
-        if (player.isOnField) {
-            let fieldCount = players.filter(p => p.isOnField).length;
-            if (fieldCount <= 3) {
-                alert("Não podes expulsar este jogador em campo pois ficarias com menos de 3 atletas!");
-                player.redCards--;
-                return;
-            }
-            player.isOnField = false;
-        }
-        triggerRedCardExclusion();
-        logAction(teamName.toUpperCase(), `Cartão Vermelho Direto (Exclusão 2 min): #${player.number} ${player.name}`, null, null);
-    }
-    renderPlayersList();
-}
-
-// Função para corrigir/reverter cartões em caso de erro
-function correctCardValue(event, index, cardType, delta) {
-    event.stopPropagation();
-    let player = players[index];
-    let teamName = document.getElementById('input-home-name').value || 'DINAMO';
-
-    if (cardType === 'yellow') {
-        player.yellowCards += delta;
-        if (player.yellowCards < 0) player.yellowCards = 0;
-        logAction(teamName.toUpperCase(), `Correção Cartão Amarelo (${delta > 0 ? '+1' : '-1'}): #${player.number} ${player.name}`, null, null);
-    } else if (cardType === 'red') {
-        player.redCards += delta;
-        if (player.redCards < 0) player.redCards = 0;
-        logAction(teamName.toUpperCase(), `Correção Cartão Vermelho (${delta > 0 ? '+1' : '-1'}): #${player.number} ${player.name}`, null, null);
-    }
-    renderPlayersList();
-}
-
-// Correção e ajuste de Golos através do Placar Superior (com limpeza de pontos no campo)
-function correctStatValue(category, delta) {
-    let teamKey = category.includes('home') ? 'home' : 'away';
-    if (category.includes('goals')) {
-        let pitchId = teamKey === 'home' ? 'pitch-goal-home' : 'pitch-goal-away';
-        if (teamKey === 'home') {
-            homeGoals += delta;
-            if (homeGoals < 0) homeGoals = 0;
-            document.getElementById('sb-home-goals').innerText = homeGoals;
-            statsData[currentPeriod].home.golos = homeGoals;
-        } else {
-            awayGoals += delta;
-            if (awayGoals < 0) awayGoals = 0;
-            document.getElementById('sb-away-goals').innerText = awayGoals;
-            statsData[currentPeriod].away.golos = awayGoals;
-        }
-
-        if (delta < 0) {
-            let pitchEl = document.getElementById(pitchId);
-            if (pitchEl) {
-                let markers = pitchEl.querySelectorAll('.pitch-marker');
-                if (markers.length > 0) {
-                    markers[markers.length - 1].remove();
-                }
-            }
-        }
-    }
-    updateStatsDisplay();
-    logAction('SISTEMA', `Correção de Placar/Golos (${category}: ${delta > 0 ? '+' + delta : delta})`, null, null);
-}
-
-// Correção e ajuste de Remates e Golos nos Meios-Campos (com limpeza automática do ponto)
-function modifyPitchStat(teamKey, statType, delta) {
-    let pitchId = '';
-    if (statType === 'goal') {
-        pitchId = teamKey === 'home' ? 'pitch-goal-home' : 'pitch-goal-away';
-        statsData[currentPeriod][teamKey].golos += delta;
-        if (statsData[currentPeriod][teamKey].golos < 0) statsData[currentPeriod][teamKey].golos = 0;
-        
-        if (teamKey === 'home') {
-            homeGoals += delta;
-            if (homeGoals < 0) homeGoals = 0;
-            document.getElementById('sb-home-goals').innerText = homeGoals;
-        } else {
-            awayGoals += delta;
-            if (awayGoals < 0) awayGoals = 0;
-            document.getElementById('sb-away-goals').innerText = awayGoals;
-        }
-    } else if (statType === 'shot') {
-        pitchId = teamKey === 'home' ? 'pitch-shot-home' : 'pitch-shot-away';
-        statsData[currentPeriod][teamKey].remates += delta;
-        if (statsData[currentPeriod][teamKey].remates < 0) statsData[currentPeriod][teamKey].remates = 0;
-    }
-
-    if (delta < 0 && pitchId) {
-        let pitchEl = document.getElementById(pitchId);
-        if (pitchEl) {
-            let markers = pitchEl.querySelectorAll('.pitch-marker');
-            if (markers.length > 0) {
-                markers[markers.length - 1].remove();
-            }
-        }
-    }
-
-    updateStatsDisplay();
-    let teamName = teamKey === 'home' ? (document.getElementById('input-home-name').value || 'DINAMO') : (document.getElementById('input-away-name').value || 'VISITANTE');
-    logAction(teamName.toUpperCase(), `Correção manual em campo: ${statType.toUpperCase()} (${delta > 0 ? '+' + delta : delta})`, null, null);
-}
-
 function modifyStat(team, actionType, delta) {
     statsData[currentPeriod][team][actionType] += delta;
     if (statsData[currentPeriod][team][actionType] < 0) {
@@ -612,14 +449,6 @@ function finalizePitchAction(type, teamKey, teamName, x, y, playerStr) {
             awayGoals++;
             document.getElementById('sb-away-goals').innerText = awayGoals;
         }
-        
-        if (redCardActive && teamKey === 'home') {
-            redCardActive = false;
-            redCardSecondsRemaining = 0;
-            document.getElementById('red-card-timer-box').style.display = 'none';
-            logAction('SISTEMA', 'Exclusão de 2 min cancelada por golo sofrido', null, null);
-        }
-
         logAction(teamName.toUpperCase(), `GOLO (${currentPeriod}ºP)${playerStr}`, x.toFixed(0), y.toFixed(0));
     } else {
         statsData[currentPeriod][teamKey].remates++;
@@ -662,6 +491,37 @@ function logAction(teamName, actionDesc, coordX, coordY) {
     logBox.insertBefore(entry, logBox.firstChild);
 }
 
+// -------------------------------------------------------------
+// CARTÕES E GESTÃO DE PLANTEL
+// -------------------------------------------------------------
+function togglePlayerField(index) {
+    let player = players[index];
+    if (player) {
+        player.isOnField = !player.isOnField;
+        if (player.isOnField) player.substitutionsCount++;
+        renderPlayersList();
+    }
+}
+
+function updatePlayerNumber(index, newNum) { players[index].number = newNum; }
+function updatePlayerName(index, newName) { players[index].name = newName; }
+
+function addCard(event, index, cardType) {
+    event.stopPropagation();
+    let player = players[index];
+    let teamName = document.getElementById('input-home-name').value || 'DINAMO';
+    if (cardType === 'yellow') {
+        player.yellowCards++;
+        logAction(teamName.toUpperCase(), `Cartão Amarelo: #${player.number} ${player.name}`, null, null);
+    } else if (cardType === 'red') {
+        player.redCards++;
+        player.isOnField = false;
+        triggerRedCardExclusion(); // Ativa o temporizador de 2 minutos a piscar
+        logAction(teamName.toUpperCase(), `Cartão Vermelho: #${player.number} ${player.name} (Exclusão 2min)`, null, null);
+    }
+    renderPlayersList();
+}
+
 function formatTime(totalSecs) {
     let mins = Math.floor(totalSecs / 60);
     let secs = totalSecs % 60;
@@ -696,12 +556,9 @@ function renderPlayersList() {
                 </div>
             </div>
             <div class="tile-footer">
-                <div class="tile-cards" onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 2px;">
-                    <button class="card-square yellow-sq" onclick="addCard(event, ${index}, 'yellow')" title="Adicionar Amarelo">${player.yellowCards > 0 ? player.yellowCards : '🟨'}</button>
-                    ${player.yellowCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'yellow', -1)" title="Corrigir Amarelo">-</button>` : ''}
-                    
-                    <button class="card-square red-sq" onclick="addCard(event, ${index}, 'red')" title="Adicionar Vermelho">${player.redCards > 0 ? player.redCards : '🟥'}</button>
-                    ${player.redCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'red', -1)" title="Corrigir Vermelho">-</button>` : ''}
+                <div class="tile-cards" onclick="event.stopPropagation()">
+                    <button class="card-square yellow-sq" onclick="addCard(event, ${index}, 'yellow')" title="Amarelo">${player.yellowCards > 0 ? player.yellowCards : '🟨'}</button>
+                    <button class="card-square red-sq" onclick="addCard(event, ${index}, 'red')" title="Vermelho">${player.redCards > 0 ? player.redCards : '🟥'}</button>
                 </div>
                 <span class="tile-status-badge">${player.isOnField ? 'EM CAMPO' : 'BANCO'} (${player.substitutionsCount})</span>
             </div>
@@ -724,9 +581,10 @@ function updateTimesOnly() {
 }
 
 // -------------------------------------------------------------
-// GRÁFICOS DESPORTIVOS
+// GRÁFICOS DESPORTIVOS (Chart.js - Linhas e Barras)
 // -------------------------------------------------------------
 function initCharts() {
+    // Gráfico de Minutos (Linha suave)
     let ctxMin = document.getElementById('chartMinutes').getContext('2d');
     chartMinutesInstance = new Chart(ctxMin, {
         type: 'line',
@@ -744,6 +602,7 @@ function initCharts() {
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa', font: { size: 10 } } } } }
     });
 
+    // Gráfico de Remates e Golos (Barras)
     let ctxShots = document.getElementById('chartShots').getContext('2d');
     chartShotsInstance = new Chart(ctxShots, {
         type: 'bar',
@@ -751,6 +610,7 @@ function initCharts() {
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa' } } } }
     });
 
+    // Gráfico de Substituições (Barras)
     let ctxSubs = document.getElementById('chartSubs').getContext('2d');
     chartSubsInstance = new Chart(ctxSubs, {
         type: 'bar',
