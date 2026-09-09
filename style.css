@@ -860,3 +860,28 @@ input[type="file"] {
     0% { opacity: 1; transform: scale(1); }
     100% { opacity: 0.5; transform: scale(1.03); }
 }
+/* Adicionar em style.css */
+.correction-btn-group {
+    display: flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+.btn-corr {
+    background: #333;
+    color: #ffcc00;
+    border: 1px solid #444;
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.btn-corr:hover {
+    background: #444;
+}
+.error-badge-futsal {
+    color: #ff5555;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 2px;
+}
