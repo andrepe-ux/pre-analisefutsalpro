@@ -381,29 +381,32 @@
         }
 
         function showEditableRosterModal(roster) {
-            document.getElementById('setup-game-screen').style.display = 'none';
-            let container = document.getElementById('roster-editable-list');
-            container.innerHTML = '';
+    document.getElementById('setup-game-screen').style.display = 'none';
+    let container = document.getElementById('roster-editable-list');
+    container.innerHTML = '';
 
-            for (let i = 0; i < 20; i++) {
-                let p = roster[i];
-                let isChecked = p ? (p.selected !== false) : false;
-                let numVal = p ? p.number : (i + 1);
-                let nameVal = p ? p.name : `Atleta ${i + 1}`;
+    for (let i = 0; i < 20; i++) {
+        let p = roster[i];
+        
+        // Alterado aqui: se 'p' não existir, 'selected' começa a falso (false)
+        let isChecked = p ? (p.selected === true) : false;
+        
+        let numVal = p ? p.number : (i + 1);
+        let nameVal = p ? p.name : `Atleta ${i + 1}`;
 
-                let div = document.createElement('div');
-                div.style.cssText = "display: flex; gap: 8px; align-items: center; background: #222; padding: 4px 8px; border-radius: 5px;";
-                div.innerHTML = `
-                    <input type="checkbox" id="check-p-${i}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px;" onchange="updateRosterCount()">
-                    <input type="number" id="num-p-${i}" value="${numVal}" style="width: 55px; padding: 4px; background: #111; color: #ffcc00; font-weight:bold; border: 1px solid #444; border-radius: 4px; text-align: center;">
-                    <input type="text" id="name-p-${i}" value="${nameVal}" style="flex: 1; padding: 4px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px;">
-                `;
-                container.appendChild(div);
-            }
+        let div = document.createElement('div');
+        div.style.cssText = "display: flex; gap: 8px; align-items: center; background: #222; padding: 4px 8px; border-radius: 5px;";
+        div.innerHTML = `
+            <input type="checkbox" id="check-p-${i}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px;" onchange="updateRosterCount()">
+            <input type="number" id="num-p-${i}" value="${numVal}" style="width: 55px; padding: 4px; background: #111; color: #ffcc00; font-weight:bold; border: 1px solid #444; border-radius: 4px; text-align: center;">
+            <input type="text" id="name-p-${i}" value="${nameVal}" style="flex: 1; padding: 4px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px;">
+        `;
+        container.appendChild(div);
+    }
 
-            updateRosterCount();
-            document.getElementById('roster-select-modal').style.display = 'flex';
-        }
+    updateRosterCount();
+    document.getElementById('roster-select-modal').style.display = 'flex';
+}
 
         function updateRosterCount() {
             let count = 0;
