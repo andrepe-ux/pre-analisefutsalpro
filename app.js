@@ -242,6 +242,7 @@ function startTimer() {
                     if (redCardSecondsRemaining <= 0) {
                         redCardActive = false;
                         document.getElementById('red-card-timer-box').style.display = 'none';
+                        logAction('SISTEMA', 'Terminou o tempo de exclusão de 2 min. A equipa já pode repor o jogador em campo.', null, null);
                     }
                 }
 
@@ -369,7 +370,7 @@ function togglePlayerField(index) {
 
     if (!player.isOnField) {
         if (redCardActive && currentFieldCount >= 4) {
-            alert("Atenção: Com jogador expulso, só podes ter no máximo 4 atletas em campo até terminar a penalização de 2 minutos!");
+            alert("Atenção: A penalização de 2 minutos ainda está a decorrer. Só podes colocar um jogador em campo quando o tempo terminar ou se sofrerem um golo!");
             return;
         }
         if (currentFieldCount >= 5) {
@@ -433,7 +434,7 @@ function addCard(event, index, cardType) {
     renderPlayersList();
 }
 
-// Função para corrigir/reverter cartões em caso de erro
+// Função para corrigir/reverter cartões em caso de erro (com anulação dos 2 minutos se aplicável)
 function correctCardValue(event, index, cardType, delta) {
     event.stopPropagation();
     let player = players[index];
@@ -444,8 +445,18 @@ function correctCardValue(event, index, cardType, delta) {
         if (player.yellowCards < 0) player.yellowCards = 0;
         logAction(teamName.toUpperCase(), `Correção Cartão Amarelo (${delta > 0 ? '+1' : '-1'}): #${player.number} ${player.name}`, null, null);
     } else if (cardType === 'red') {
+        let prevRed = player.redCards;
         player.redCards += delta;
         if (player.redCards < 0) player.redCards = 0;
+        
+        if (prevRed > 0 && player.redCards === 0) {
+            redCardActive = false;
+            redCardSecondsRemaining = 0;
+            let timerBox = document.getElementById('red-card-timer-box');
+            if (timerBox) timerBox.style.display = 'none';
+            logAction('SISTEMA', `Cartão Vermelho anulado para #${player.number} ${player.name} - Exclusão de 2 min cancelada`, null, null);
+        }
+
         logAction(teamName.toUpperCase(), `Correção Cartão Vermelho (${delta > 0 ? '+1' : '-1'}): #${player.number} ${player.name}`, null, null);
     }
     renderPlayersList();
