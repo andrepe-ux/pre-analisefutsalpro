@@ -158,7 +158,11 @@
                             <span class="sb-team-fouls" id="sb-home-fouls">Faltas: 0/5</span>
                         </div>
                         <div class="scoreboard-center-clock">
-                            <h2 id="timer" style="font-size: 1.9rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(-1)" title="Menos 1 Segundo">-1s</button>
+                                <h2 id="timer" style="font-size: 1.9rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
+                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(1)" title="Mais 1 Segundo">+1s</button>
+                            </div>
                             
                             <div id="red-card-timer-box" style="display: none; margin-top: 4px; background: rgba(255, 85, 85, 0.2); border: 1px solid #ff5555; padding: 2px 8px; border-radius: 4px;">
                                 <span id="red-card-timer-text" style="font-size: 0.8rem; color: #ff5555; font-weight: bold;">🟥 EXCLUSÃO: 02:00</span>
@@ -192,7 +196,6 @@
                     <div class="timer-controls-pro">
                         <button class="btn-start-pro" onclick="startTimer()">Iniciar</button>
                         <button class="btn-pause-pro" onclick="pauseTimer()">Pausar</button>
-                        <button class="btn-reset-pro" onclick="resetTimer()">Reiniciar</button>
                     </div>
 
                     <div class="timeouts-container">
@@ -213,7 +216,7 @@
                 <div class="stats-panel">
                     <div class="stats-team-col">
                         <h4 class="team-title-home" id="stats-home-title">DINAMO</h4>
-                        <div class="stat-row">
+                        <div class="stat-row large-stat-row">
                             <span>Faltas</span>
                             <div class="stat-buttons"><button onclick="modifyStat('home', 'livres', -1)">-</button><span id="home-livres">0</span><button onclick="modifyStat('home', 'livres', 1)">+</button></div>
                         </div>
@@ -225,18 +228,6 @@
                             <span>Lançamentos</span>
                             <div class="stat-buttons"><button onclick="modifyStat('home', 'lancamentos', -1)">-</button><span id="home-lancamentos">0</span><button onclick="modifyStat('home', 'lancamentos', 1)">+</button></div>
                         </div>
-                        <div class="stat-row">
-                            <span>Perdas Posse</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'posse', -1)">-</button><span id="home-posse">0</span><button onclick="modifyStat('home', 'posse', 1)">+</button></div>
-                        </div>
-                        <div class="stat-row">
-                            <span>Passes Falhados</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'passes_falhados', -1)">-</button><span id="home-passes_falhados">0</span><button onclick="modifyStat('home', 'passes_falhados', 1)">+</button></div>
-                        </div>
-                        <div class="stat-row">
-                            <span>Passes Certos</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'passes_completos', -1)">-</button><span id="home-passes_completos">0</span><button onclick="modifyStat('home', 'passes_completos', 1)">+</button></div>
-                        </div>
                     </div>
 
                     <div class="stats-timeline">
@@ -246,7 +237,7 @@
 
                     <div class="stats-team-col">
                         <h4 class="team-title-away" id="stats-away-title">VISITANTE</h4>
-                        <div class="stat-row">
+                        <div class="stat-row large-stat-row">
                             <div class="stat-buttons"><button onclick="modifyStat('away', 'livres', -1)">-</button><span id="away-livres">0</span><button onclick="modifyStat('away', 'livres', 1)">+</button></div>
                             <span>Faltas</span>
                         </div>
@@ -258,17 +249,12 @@
                             <div class="stat-buttons"><button onclick="modifyStat('away', 'lancamentos', -1)">-</button><span id="away-lancamentos">0</span><button onclick="modifyStat('away', 'lancamentos', 1)">+</button></div>
                             <span>Lançamentos</span>
                         </div>
-                        <div class="stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'posse', -1)">-</button><span id="away-posse">0</span><button onclick="modifyStat('away', 'posse', 1)">+</button></div>
-                            <span>Perdas Posse</span>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'passes_falhados', -1)">-</button><span id="away-passes_falhados">0</span><button onclick="modifyStat('away', 'passes_falhados', 1)">+</button></div>
-                            <span>Passes Falhados</span>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'passes_completos', -1)">-</button><span id="away-passes_completos">0</span><button onclick="modifyStat('away', 'passes_completos', 1)">+</button></div>
-                            <span>Passes Certos</span>
+                        <div class="stat-row away-cards-row" style="background: #1f1414; border: 1px solid #442222; margin-top: 4px; padding: 6px;">
+                            <span style="font-size: 0.7rem; color: #ff5555; font-weight: bold;">Cartões Adversário:</span>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <button class="card-square yellow-sq big-card" onclick="addAwayCard('yellow')" title="Amarelo Visitante">🟨 <span id="away-yellow-count">0</span></button>
+                                <button class="card-square red-sq big-card" onclick="addAwayCard('red')" title="Vermelho Visitante / Apenas Registo">🟥 <span id="away-red-count">0</span></button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,6 @@ body {
     align-items: center;
 }
 
-/* Contentor que escala proporcionalmente e automaticamente ao ecrã */
 #app-scaler {
     width: 1280px;
     height: 720px;
@@ -27,7 +26,6 @@ body {
     position: relative;
 }
 
-/* Ecrãs de Login e Modais */
 #login-screen, #setup-game-screen, #roster-select-modal {
     position: fixed;
     top: 0;
@@ -116,7 +114,6 @@ body {
     min-height: 16px;
 }
 
-/* Layout Principal */
 .main-layout {
     display: flex;
     width: 100%;
@@ -127,7 +124,6 @@ body {
     overflow: hidden;
 }
 
-/* Painel Esquerdo (Plantel / Gráficos) */
 .left-panel {
     flex: 1.25;
     background: #1a1a1a;
@@ -211,7 +207,6 @@ input[type="file"] {
     display: flex;
 }
 
-/* Grelha de Atletas rigorosamente para 4x4 */
 .players-grid-container {
     flex: 1;
     display: grid;
@@ -271,7 +266,6 @@ input[type="file"] {
     text-overflow: ellipsis;
 }
 
-/* Relógios sobrepostos verticalmente */
 .tile-timers-box {
     display: flex;
     flex-direction: column; 
@@ -311,11 +305,15 @@ input[type="file"] {
 .card-square {
     border: none;
     color: #000;
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 4px 8px;
+    border-radius: 4px;
     cursor: pointer;
+}
+.card-square.big-card {
+    font-size: 0.9rem;
+    padding: 6px 12px;
 }
 .yellow-sq { background: #ffc107; }
 .red-sq { background: #dc3545; color: #fff; }
@@ -350,7 +348,6 @@ input[type="file"] {
     border-radius: 4px;
 }
 
-/* Gráficos */
 .charts-container {
     flex: 1;
     display: flex;
@@ -377,7 +374,6 @@ input[type="file"] {
     flex: 1;
 }
 
-/* Painel Direito (Placar, Estatísticas e Campos) */
 .right-panel {
     flex: 1.5;
     display: flex;
@@ -404,7 +400,6 @@ input[type="file"] {
     padding: 6px;
 }
 
-/* Placar Integrado no Topo */
 .scoreboard-top-box {
     display: flex;
     justify-content: space-between;
@@ -480,6 +475,20 @@ input[type="file"] {
     padding: 1px 3px;
 }
 
+.btn-clock-adj {
+    background: #333;
+    color: #00ffcc;
+    border: 1px solid #555;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btn-clock-adj:hover {
+    background: #444;
+}
+
 .period-selector {
     display: flex;
     gap: 6px;
@@ -531,19 +540,18 @@ input[type="file"] {
 }
 .btn-report-pdf:hover { background: #c82333; }
 
-/* Botões Pro de Cronómetro */
 .timer-controls-pro {
     display: flex;
-    gap: 6px;
-    margin-top: 6px;
+    gap: 10px;
+    margin-top: 8px;
 }
 .btn-start-pro {
-    flex: 1.5;
+    flex: 1;
     background-color: #28a745;
     color: #fff;
     font-weight: bold;
-    font-size: 0.95rem;
-    padding: 8px;
+    font-size: 1.15rem;
+    padding: 12px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -551,30 +559,17 @@ input[type="file"] {
 .btn-start-pro:hover { background-color: #218838; }
 
 .btn-pause-pro {
-    flex: 1.5;
+    flex: 1;
     background-color: #ffc107;
     color: #000;
     font-weight: bold;
-    font-size: 0.95rem;
-    padding: 8px;
+    font-size: 1.15rem;
+    padding: 12px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
 }
 .btn-pause-pro:hover { background-color: #e0a800; }
-
-.btn-reset-pro {
-    flex: 1;
-    background-color: #dc3545;
-    color: #fff;
-    font-weight: bold;
-    font-size: 0.85rem;
-    padding: 8px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-.btn-reset-pro:hover { background-color: #c82333; }
 
 .timeouts-container {
     display: flex;
@@ -614,7 +609,6 @@ input[type="file"] {
     color: #ff5555;
 }
 
-/* Painel de Estatísticas e Ações */
 .stats-panel {
     display: flex;
     gap: 6px;
@@ -627,7 +621,7 @@ input[type="file"] {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
 }
 .stats-team-col h4 {
     margin: 0 0 2px 0;
@@ -648,6 +642,26 @@ input[type="file"] {
     border-radius: 4px;
     font-size: 0.78rem;
 }
+.stat-row.large-stat-row {
+    padding: 8px 10px;
+    background: #202020;
+    border: 1px solid #444;
+}
+.stat-row.large-stat-row span {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ffcc00;
+}
+.stat-row.large-stat-row .stat-buttons button {
+    width: 34px;
+    height: 34px;
+    font-size: 1.2rem;
+}
+.stat-row.large-stat-row .stat-buttons span {
+    font-size: 1.2rem;
+    min-width: 26px;
+}
+
 .stat-buttons {
     display: flex;
     align-items: center;
@@ -708,7 +722,6 @@ input[type="file"] {
     padding-bottom: 2px;
 }
 
-/* Campos de Futsal com Proporção Real 20x10 (Aspect-Ratio 2:1) */
 .pitch-container-grid {
     display: flex;
     flex-direction: column;
@@ -860,7 +873,7 @@ input[type="file"] {
     0% { opacity: 1; transform: scale(1); }
     100% { opacity: 0.5; transform: scale(1.03); }
 }
-/* Adicionar em style.css */
+
 .correction-btn-group {
     display: flex;
     gap: 2px;

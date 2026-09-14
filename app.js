@@ -8,9 +8,13 @@ let isRunning = false;
 let homeGoals = 0;
 let awayGoals = 0;
 
-// Temporizador de Exclusão (Vermelho - 120 segundos)
+// Temporizador de Exclusão (Vermelho - 120 segundos) - Apenas para a Equipa da Casa
 let redCardSecondsRemaining = 0;
 let redCardActive = false;
+
+// Contagem de Cartões da Equipa Visitante
+let awayYellowCards = 0;
+let awayRedCards = 0;
 
 let actionLogsHistory = {
     1: [],
@@ -29,12 +33,12 @@ let timeoutsUsed = {
 
 let statsData = {
     1: {
-        home: { livres: 0, cantos: 0, lancamentos: 0, posse: 0, passes_falhados: 0, passes_completos: 0, remates: 0, golos: 0 },
-        away: { livres: 0, cantos: 0, lancamentos: 0, posse: 0, passes_falhados: 0, passes_completos: 0, remates: 0, golos: 0 }
+        home: { livres: 0, cantos: 0, lancamentos: 0, remates: 0, golos: 0 },
+        away: { livres: 0, cantos: 0, lancamentos: 0, remates: 0, golos: 0 }
     },
     2: {
-        home: { livres: 0, cantos: 0, lancamentos: 0, posse: 0, passes_falhados: 0, passes_completos: 0, remates: 0, golos: 0 },
-        away: { livres: 0, cantos: 0, lancamentos: 0, posse: 0, passes_falhados: 0, passes_completos: 0, remates: 0, golos: 0 }
+        home: { livres: 0, cantos: 0, lancamentos: 0, remates: 0, golos: 0 },
+        away: { livres: 0, cantos: 0, lancamentos: 0, remates: 0, golos: 0 }
     }
 };
 
@@ -99,7 +103,7 @@ function changeTimerDuration() {
 }
 
 // -------------------------------------------------------------
-// SESSÃO JSON
+// SESSÃO JSON & OFFLINE SUPPORT
 // -------------------------------------------------------------
 function exportSessionJSON() {
     let sessionData = {
@@ -115,6 +119,8 @@ function exportSessionJSON() {
         timeoutsUsed: timeoutsUsed,
         statsData: statsData,
         players: players,
+        awayYellowCards: awayYellowCards,
+        awayRedCards: awayRedCards,
         actionLogsHistory: actionLogsHistory,
         periodPitchHTML: periodPitchHTML,
         htmlLogs: document.getElementById('action-log').innerHTML,
@@ -158,11 +164,15 @@ function importSessionJSON(event) {
             timeoutsUsed = sessionData.timeoutsUsed || timeoutsUsed;
             statsData = sessionData.statsData || statsData;
             players = sessionData.players || players;
+            awayYellowCards = sessionData.awayYellowCards || 0;
+            awayRedCards = sessionData.awayRedCards || 0;
             actionLogsHistory = sessionData.actionLogsHistory || { 1: [], 2: [] };
             periodPitchHTML = sessionData.periodPitchHTML || { 1: null, 2: null };
 
             document.getElementById('sb-home-goals').innerText = homeGoals;
             document.getElementById('sb-away-goals').innerText = awayGoals;
+            document.getElementById('away-yellow-count').innerText = awayYellowCards;
+            document.getElementById('away-red-count').innerText = awayRedCards;
             document.getElementById('action-log').innerHTML = sessionData.htmlLogs || '';
 
             if (sessionData.pitchMarkers) {
@@ -175,6 +185,11 @@ function importSessionJSON(event) {
             document.getElementById('btn-p1').className = currentPeriod === 1 ? 'period-btn active' : 'period-btn';
             document.getElementById('btn-p2').className = currentPeriod === 2 ? 'period-btn active' : 'period-btn';
 
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('setup-game-screen').style.display = 'none';
+            document.getElementById('roster-select-modal').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+
             updateTeamNames();
             updateTimerDisplay();
             updateTimeoutUI();
@@ -182,7 +197,7 @@ function importSessionJSON(event) {
             updateStatsDisplay();
             renderPlayersList();
 
-            alert("Sessão PRO recuperada com sucesso!");
+            alert("Sessão PRO recuperada com sucesso! Aplicação pronta para funcionar offline.");
         } catch (err) {
             alert("Erro ao ler o ficheiro JSON.");
             console.error(err);
@@ -242,7 +257,7 @@ function startTimer() {
                     if (redCardSecondsRemaining <= 0) {
                         redCardActive = false;
                         document.getElementById('red-card-timer-box').style.display = 'none';
-                        logAction('SISTEMA', 'Terminou o tempo de exclusão de 2 min. A equipa já pode repor o jogador em campo.', null, null);
+                        logAction('SISTEMA', 'Terminou o tempo de exclusão de 2 min.', null, null);
                     }
                 }
 
@@ -269,10 +284,17 @@ function pauseTimer() {
     clearInterval(timerInterval);
 }
 
-function resetTimer() {
-    pauseTimer();
-    totalSeconds = periodDurationMinutes * 60;
+function adjustTimerSeconds(delta) {
+    if (isRunning) {
+        alert("O ajuste fino do cronómetro só funciona com o relógio parado!");
+        return;
+    }
+    totalSeconds += delta;
+    if (totalSeconds < 0) totalSeconds = 0;
+    let maxSeconds = periodDurationMinutes * 60;
+    if (totalSeconds > maxSeconds) totalSeconds = maxSeconds;
     updateTimerDisplay();
+    logAction('SISTEMA', `Ajuste fino de cronómetro (${delta > 0 ? '+' + delta + 's' : delta + 's'})`, null, null);
 }
 
 function triggerRedCardExclusion() {
@@ -355,12 +377,11 @@ function updateStatsDisplay() {
 }
 
 // -------------------------------------------------------------
-// GESTÃO DE JOGADORES, CARTÕES E VALIDAÇÃO (3 A 5 JOGADORES)
+// GESTÃO DE JOGADORES E CARTÕES
 // -------------------------------------------------------------
 function togglePlayerField(index) {
     let player = players[index];
     
-    // Regra: Jogador expulso (vermelho) não pode voltar a entrar no jogo
     if (player.redCards > 0 && !player.isOnField) {
         alert("Atenção: Este jogador foi expulso (cartão vermelho) e não pode voltar a entrar no jogo!");
         return;
@@ -401,7 +422,6 @@ function addCard(event, index, cardType) {
         player.yellowCards++;
         logAction(teamName.toUpperCase(), `Cartão Amarelo: #${player.number} ${player.name}`, null, null);
         
-        // 2 Cartões Amarelos = Vermelho Automático e Exclusão de 2 min
         if (player.yellowCards >= 2) {
             player.redCards++;
             if (player.isOnField) {
@@ -434,7 +454,20 @@ function addCard(event, index, cardType) {
     renderPlayersList();
 }
 
-// Função para corrigir/reverter cartões em caso de erro (com anulação dos 2 minutos se aplicável)
+// Cartão para Equipa Visitante (Regista apenas a ocorrência e o contador, sem despoletar cronómetro ou exclusões)
+function addAwayCard(cardType) {
+    let awayName = document.getElementById('input-away-name').value || 'VISITANTE';
+    if (cardType === 'yellow') {
+        awayYellowCards++;
+        document.getElementById('away-yellow-count').innerText = awayYellowCards;
+        logAction(awayName.toUpperCase(), `🟨 Cartão Amarelo (Adversário)`, null, null);
+    } else if (cardType === 'red') {
+        awayRedCards++;
+        document.getElementById('away-red-count').innerText = awayRedCards;
+        logAction(awayName.toUpperCase(), `🟥 Cartão Vermelho (Adversário)`, null, null);
+    }
+}
+
 function correctCardValue(event, index, cardType, delta) {
     event.stopPropagation();
     let player = players[index];
@@ -462,7 +495,6 @@ function correctCardValue(event, index, cardType, delta) {
     renderPlayersList();
 }
 
-// Correção e ajuste de Golos através do Placar Superior (com limpeza de pontos no campo)
 function correctStatValue(category, delta) {
     let teamKey = category.includes('home') ? 'home' : 'away';
     if (category.includes('goals')) {
@@ -493,7 +525,6 @@ function correctStatValue(category, delta) {
     logAction('SISTEMA', `Correção de Placar/Golos (${category}: ${delta > 0 ? '+' + delta : delta})`, null, null);
 }
 
-// Correção e ajuste de Remates e Golos nos Meios-Campos (com limpeza automática do ponto)
 function modifyPitchStat(teamKey, statType, delta) {
     let pitchId = '';
     if (statType === 'goal') {
@@ -548,10 +579,7 @@ function modifyStat(team, actionType, delta) {
     let actionNames = {
         livres: 'Falta/Livre',
         cantos: 'Canto',
-        lancamentos: 'Lançamento',
-        posse: 'Perda de Posse',
-        passes_falhados: 'Passe Falhado',
-        passes_completos: 'Passe Certo'
+        lancamentos: 'Lançamento'
     };
     
     let sign = delta > 0 ? 'Registo' : 'Correção (-)';
@@ -707,11 +735,11 @@ function renderPlayersList() {
                 </div>
             </div>
             <div class="tile-footer">
-                <div class="tile-cards" onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 2px;">
-                    <button class="card-square yellow-sq" onclick="addCard(event, ${index}, 'yellow')" title="Adicionar Amarelo">${player.yellowCards > 0 ? player.yellowCards : '🟨'}</button>
+                <div class="tile-cards" onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 4px;">
+                    <button class="card-square yellow-sq big-card" onclick="addCard(event, ${index}, 'yellow')" title="Adicionar Amarelo">${player.yellowCards > 0 ? player.yellowCards : '🟨'}</button>
                     ${player.yellowCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'yellow', -1)" title="Corrigir Amarelo">-</button>` : ''}
                     
-                    <button class="card-square red-sq" onclick="addCard(event, ${index}, 'red')" title="Adicionar Vermelho">${player.redCards > 0 ? player.redCards : '🟥'}</button>
+                    <button class="card-square red-sq big-card" onclick="addCard(event, ${index}, 'red')" title="Adicionar Vermelho">${player.redCards > 0 ? player.redCards : '🟥'}</button>
                     ${player.redCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'red', -1)" title="Corrigir Vermelho">-</button>` : ''}
                 </div>
                 <span class="tile-status-badge">${player.isOnField ? 'EM CAMPO' : 'BANCO'} (${player.substitutionsCount})</span>
@@ -819,10 +847,7 @@ function exportReportExcel() {
         ["Remates", s1.home.remates, s1.away.remates, s2.home.remates, s2.away.remates, s1.home.remates + s2.home.remates, s1.away.remates + s2.away.remates],
         ["Faltas", s1.home.livres, s1.away.livres, s2.home.livres, s2.away.livres, s1.home.livres + s2.home.livres, s1.away.livres + s2.away.livres],
         ["Cantos", s1.home.cantos, s1.away.cantos, s2.home.cantos, s2.away.cantos, s1.home.cantos + s2.home.cantos, s1.away.cantos + s2.away.cantos],
-        ["Lançamentos", s1.home.lancamentos, s1.away.lancamentos, s2.home.lancamentos, s2.away.lancamentos, s1.home.lancamentos + s2.home.lancamentos, s1.away.lancamentos + s2.away.lancamentos],
-        ["Perdas de Posse", s1.home.posse, s1.away.posse, s2.home.posse, s2.away.posse, s1.home.posse + s2.home.posse, s1.away.posse + s2.away.posse],
-        ["Passes Falhados", s1.home.passes_falhados, s1.away.passes_falhados, s2.home.passes_falhados, s2.away.passes_falhados, s1.home.passes_falhados + s2.home.passes_falhados, s1.away.passes_falhados + s2.away.passes_falhados],
-        ["Passes Certos", s1.home.passes_completos, s1.away.passes_completos, s2.home.passes_completos, s2.away.passes_completos, s1.home.passes_completos + s2.home.passes_completos, s1.away.passes_completos + s2.away.passes_completos]
+        ["Lançamentos", s1.home.lancamentos, s1.away.lancamentos, s2.home.lancamentos, s2.away.lancamentos, s1.home.lancamentos + s2.home.lancamentos, s1.away.lancamentos + s2.away.lancamentos]
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumoData), "Resumo");
 
