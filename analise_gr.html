@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Guarda-Redes - Futsal PRO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tactical-layout {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            padding: 10px;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+        .tactical-sidebar {
+            width: 320px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            gap: 8px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .tactical-main {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            height: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .gr-dual-container {
+            display: flex;
+            flex: 1;
+            gap: 12px;
+            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gr-view-box {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .gr-view-title {
+            font-size: 0.85rem;
+            color: #00ffcc;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .futsal-half-pitch {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            background-color: rgba(40, 140, 60, 0.45);
+            background-image: 
+                linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 40px 100%, 100% 40px;
+            border: 4px solid #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
+        }
+
+        .zone-yellow {
+            position: absolute;
+            top: 0; left: 0; width: 55%; height: 100%;
+            background: rgba(255, 204, 0, 0.28);
+            border-right: 2px dashed rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+
+        .zone-red {
+            position: absolute;
+            top: 20%; left: 0; width: 30%; height: 60%;
+            background: rgba(255, 68, 68, 0.38);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-left: none;
+            border-top-right-radius: 120px;
+            border-bottom-right-radius: 120px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .futsal-goal-pro {
+            position: relative;
+            width: 88%;
+            aspect-ratio: 3 / 2;
+            margin: auto;
+            background: linear-gradient(135deg, #03070d 0%, #071321 50%, #01140c 100%);
+            border: 12px solid transparent;
+            border-image: repeating-linear-gradient(0deg, #e63946, #e63946 16px, #ffffff 16px, #ffffff 32px) 12;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: inset 0 0 45px rgba(0,0,0,0.95), 0 5px 15px rgba(0,0,0,0.6);
+        }
+
+        .goal-net-pattern {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+            background-size: 12px 12px;
+            pointer-events: none;
+        }
+
+        .goal-grid-overlay-32 {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            z-index: 3;
+        }
+        .goal-zone-cell-32 {
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            transition: background 0.15s;
+        }
+        .goal-zone-cell-32:hover {
+            background: rgba(0, 255, 204, 0.2);
+        }
+
+        .tactical-marker {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.9);
+            border: 2px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 900;
+            color: #000;
+            z-index: 10;
+        }
+
+        .tactical-direction-banner {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,255,204,0.3);
+            margin-bottom: 6px;
+        }
+
+        .tactical-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 8px 0;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        .tactical-action-btn {
+            background: #252525;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.15s;
+        }
+        .tactical-action-btn:hover { background: #00ffcc; color: #000; border-color: #00ffcc; }
+        
+        .action-positive { border-color: #00ffcc; color: #00ffcc; }
+        .action-positive:hover { background: #00ffcc; color: #000; }
+        
+        .action-negative { border-color: #ff5555; color: #ff5555; }
+        .action-negative:hover { background: #ff5555; color: #fff; }
+
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-content { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; color: #fff; box-sizing: border-box; }
+        .modal-close-btn { width: 100%; margin-top: 10px; background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .modal-close-btn:hover { background: #444; }
+        .period-btn { background: #222; border: 1px solid #444; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .period-btn.active { background: #00ffcc; color: #000; border-color: #00ffcc; }
+        .btn-clock-adj { background: #222; color: #fff; border: 1px solid #444; padding: 2px 6px; cursor: pointer; border-radius: 3px; }
+        .btn-start-pro { background: #28a745; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; padding: 8px; }
+        .btn-pause-pro { background: #dc3545; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; padding: 8px; }
+        .btn-corr { background: #222; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .log-entry { background: #1a1a1a; padding: 5px 8px; border-radius: 4px; border-left: 3px solid #00ffcc; font-size: 0.75rem; line-height: 1.3; }
+
+        @media (max-width: 900px) {
+            .tactical-layout { flex-direction: column; height: auto; overflow-y: auto; }
+            .tactical-sidebar { width: 100%; height: auto; }
+            .tactical-main { height: 85vh; }
+            .gr-dual-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tactical-layout">
+        
+        <div class="tactical-sidebar">
+            <div style="border-bottom: 1px solid #333; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #00ffcc; font-size: 0.95rem;">Análise Guarda-Redes PRO</h3>
+                <button class="btn-corr" onclick="window.location.href='index.html'">Voltar Principal</button>
+            </div>
+
+            <button class="btn-corr" style="background: #15221c; border-color: #00ffcc; color: #00ffcc; padding: 8px; font-weight: bold; width: 100%; cursor: pointer;" onclick="openGRSelectModal()">🧤 GRs Ativos: <span id="sidebar-gr-name" style="color:#fff;">Nenhum</span></button>
+
+            <div style="padding: 8px; background: #141414; border-radius: 6px; text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <button class="btn-clock-adj" onclick="adjustTimerSeconds(-1)">-1s</button>
+                    <h2 id="gr-timer" style="font-size: 1.8rem; margin: 0; color: #00ffcc; font-family: monospace;">20:00</h2>
+                    <button class="btn-clock-adj" onclick="adjustTimerSeconds(1)">+1s</button>
+                </div>
+                <div style="margin: 4px 0;">
+                    <label style="font-size: 0.75rem;">Min:</label>
+                    <input type="number" id="gr-timer-duration" value="20" min="1" max="60" onchange="changeTimerDuration()" style="width:35px; text-align:center; background:#222; color:#fff; border:1px solid #444;">
+                </div>
+                <div style="margin-top: 4px; display: flex; justify-content: center; gap: 6px;">
+                    <button id="gr-btn-p1" class="period-btn active" onclick="switchPeriod(1)">1º Período</button>
+                    <button id="gr-btn-p2" class="period-btn" onclick="switchPeriod(2)">2º Período</button>
+                </div>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <button class="btn-start-pro" onclick="startTimer()">Iniciar</button>
+                    <button class="btn-pause-pro" onclick="pauseTimer()">Pausar</button>
+                </div>
+            </div>
+
+            <button class="btn-corr" style="background: #4a2222; border-color: #ff5555; color: #ff5555; padding: 6px; font-weight: bold; width: 100%; cursor: pointer;" onclick="undoLastAction()">↩️ Desfazer Última Ação</button>
+
+            <div style="flex: 1; display: flex; flex-direction: column; background: #111; border: 1px solid #333; border-radius: 6px; padding: 6px; overflow: hidden; min-height: 140px;">
+                <h4 style="margin: 0 0 4px 0; font-size: 0.75rem; color: #aaa; text-align: center;">Registo de Ações GR</h4>
+                <div id="gr-action-log" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
+            </div>
+
+            <button onclick="exportJSON()" style="background: #112520; border-color: #00ffcc; color: #00ffcc; padding: 8px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 6px; border: 1px solid #00ffcc;">💾 Guardar Sessão GR (.json)</button>
+
+            <div style="display: flex; gap: 6px;">
+                <button style="flex: 1; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; cursor: pointer;" onclick="exportExcel()">Excel</button>
+                <button style="flex: 1; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; cursor: pointer;" onclick="exportPDF()">PDF</button>
+            </div>
+
+            <footer style="text-align: center; font-size: 0.7rem; color: #666; border-top: 1px solid #222; padding-top: 4px;">
+                andrepe @ 2026
+            </footer>
+        </div>
+
+        <div class="tactical-main">
+            <div class="tactical-direction-banner" id="gr-match-banner">
+                <span>🛡️ ANÁLISE ESPECÍFICA DE GUARDA-REDES (ZONAS OFICIAIS)</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 0.8rem; color: #00ffcc;" id="gr-info-header">Guarda-Redes em Análise</h3>
+                <span style="font-size: 0.7rem; color: #aaa;">Toque na <b>Meia Pista</b> ou na <b>Baliza (32 Zonas)</b>.</span>
+            </div>
+
+            <div class="gr-dual-container">
+                <div class="gr-view-box">
+                    <div class="gr-view-title">📍 Meia Pista (Zonas Táticas)</div>
+                    <div class="futsal-half-pitch" id="pitch-half" onclick="handlePitchClick(event)">
+                        <div class="zone-yellow"></div>
+                        <div class="zone-red"></div>
+                        <div style="position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: rgba(255,255,255,0.85); pointer-events: none;"></div>
+                        <div style="position: absolute; top: 50%; left: 30%; width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 4;"></div>
+                        <div style="position: absolute; top: 50%; left: 55%; width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 4;"></div>
+                    </div>
+                </div>
+
+                <div class="gr-view-box" style="display: flex; align-items: center; justify-content: center;">
+                    <div class="gr-view-title" style="width: 100%;">🥅 Baliza Frontal (3x2m - 32 Zonas)</div>
+                    <div class="futsal-goal-pro" id="goal-front" onclick="handleGoalClick(event)">
+                        <div class="goal-net-pattern"></div>
+                        <div class="goal-grid-overlay-32" id="goal-grid-32"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="gr-player-modal" class="modal-backdrop" style="display: flex;">
+        <div class="modal-content" style="width: 440px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">🧤 Selecione os Guarda-Redes Ativos</h3>
+            <p style="font-size: 0.8rem; color: #aaa; text-align: center; margin-bottom: 12px;">Pode selecionar um ou mais guarda-redes disponíveis para o jogo:</p>
+            <div id="gr-players-grid" style="display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <button class="btn-action" style="margin: 0; width: 100%; padding: 10px;" onclick="confirmGRSelection()">Confirmar Seleção</button>
+        </div>
+    </div>
+
+    <div id="gr-pick-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 400px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">👤 Qual o Guarda-Redes?</h3>
+            <p style="font-size: 0.8rem; color: #aaa; text-align: center; margin-bottom: 12px;">Selecione o GR responsável por esta ação:</p>
+            <div id="gr-pick-grid" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;"></div>
+            <button class="modal-close-btn" onclick="document.getElementById('gr-pick-modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="gr-action-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 480px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;" id="gr-modal-title">Registar Ação de Guarda-Redes</h3>
+            <p style="font-size: 0.75rem; color: #ffcc00; text-align: center; margin-bottom: 8px;" id="gr-modal-subtitle"></p>
+            <div id="gr-action-container" style="display: flex; gap: 10px; margin-top: 8px;"></div>
+            <button class="modal-close-btn" style="margin-top: 10px;" onclick="closeModals()">Voltar / Cancelar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        let currentPeriod = 1;
+        let totalSeconds = 1200;
+        let timerInterval = null;
+        let isRunning = false;
+        let sessionData = { homeName: "GRC Dínamo Sanjoanense", awayName: "Adversário", roster: [] };
+        let convocadosGR = [];
+        let activeGRs = [];
+        
+        let pendingActionType = '';
+        let pendingX = 0, pendingY = 0;
+        let selectedGoalZone = '';
+        let selectedGRForAction = null;
+        let grLogs = { 1: [], 2: [] };
+        let periodMarkers = { 1: [], 2: [] };
+
+        window.onload = function() {
+            let saved = localStorage.getItem('futsal_session_data');
+            if (saved) {
+                try {
+                    sessionData = JSON.parse(saved);
+                    let lista = sessionData.convocados || (sessionData.roster ? sessionData.roster.filter(p => p.selected === true) : []);
+                    if (lista.length === 0 && sessionData.roster) lista = sessionData.roster;
+                    convocadosGR = lista;
+                    if (sessionData.grLogs) grLogs = sessionData.grLogs;
+                    if (sessionData.periodMarkers) periodMarkers = sessionData.periodMarkers;
+                } catch(e) { console.error(e); }
+            }
+
+            let home = sessionData.homeName || 'Dinamo';
+            document.getElementById('gr-info-header').innerText = `${home} (Análise de Guarda-Redes)`;
+
+            build32GridOverlay();
+            updateTimerDisplay();
+            redrawLogs();
+            renderCurrentPeriodMarkers();
+
+            openGRSelectModal();
+        };
+
+        window.addEventListener('beforeunload', function() {
+            syncLogs();
+        });
+
+        function build32GridOverlay() {
+            let gridContainer = document.getElementById('goal-grid-32');
+            gridContainer.innerHTML = '';
+            for (let r = 1; r <= 4; r++) {
+                for (let c = 1; c <= 8; c++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'goal-zone-cell-32';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function updateTimerDisplay() {
+            let min = Math.floor(totalSeconds / 60);
+            let sec = totalSeconds % 60;
+            document.getElementById('gr-timer').innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function changeTimerDuration() {
+            if (isRunning) return;
+            let minInput = parseInt(document.getElementById('gr-timer-duration').value) || 20;
+            totalSeconds = minInput * 60;
+            updateTimerDisplay();
+        }
+
+        function adjustTimerSeconds(amount) {
+            if (isRunning) return;
+            totalSeconds += amount;
+            if (totalSeconds < 0) totalSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        function switchPeriod(period) {
+            pauseTimer();
+            
+            if (period === 2 && currentPeriod === 1) {
+                exportJSONAuto("Fim_1P");
+            }
+
+            currentPeriod = period;
+            let minInput = parseInt(document.getElementById('gr-timer-duration').value) || 20;
+            totalSeconds = minInput * 60;
+
+            document.getElementById('gr-btn-p1').className = period === 1 ? 'period-btn active' : 'period-btn';
+            document.getElementById('gr-btn-p2').className = period === 2 ? 'period-btn active' : 'period-btn';
+            updateTimerDisplay();
+
+            clearVisualMarkers();
+            renderCurrentPeriodMarkers();
+        }
+
+        function clearVisualMarkers() {
+            document.querySelectorAll('.tactical-marker').forEach(m => m.remove());
+        }
+
+        function renderCurrentPeriodMarkers() {
+            clearVisualMarkers();
+            if (periodMarkers[currentPeriod]) {
+                periodMarkers[currentPeriod].forEach(mObj => {
+                    let container = mObj.target === 'goal' ? document.getElementById('goal-front') : document.getElementById('pitch-half');
+                    createDOMMarker(container, mObj.x, mObj.y, mObj.label, mObj.color);
+                });
+            }
+        }
+
+        function startTimer() {
+            if (!isRunning && totalSeconds > 0) {
+                isRunning = true;
+                timerInterval = setInterval(() => {
+                    if (totalSeconds > 0) {
+                        totalSeconds--;
+                        updateTimerDisplay();
+                    } else {
+                        pauseTimer();
+                        alert(`Fim do ${currentPeriod}º Período!`);
+                        if (currentPeriod === 1) {
+                            switchPeriod(2);
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function openGRSelectModal() {
+            let grid = document.getElementById('gr-players-grid');
+            grid.innerHTML = '';
+
+            if (convocadosGR.length === 0) {
+                grid.innerHTML = `<span style="color:#ff5555; text-align:center;">Sem atletas disponíveis na convocatória.</span>`;
+            }
+
+            convocadosGR.forEach(p => {
+                let num = p.number || p.dorsal || '';
+                let nome = p.name || p.nome || '';
+                let isChecked = activeGRs.some(gr => gr.number === p.number) ? 'checked' : '';
+
+                let lbl = document.createElement('label');
+                lbl.className = 'player-checkbox-item';
+                lbl.style.display = 'flex';
+                lbl.style.alignItems = 'center';
+                lbl.style.gap = '10px';
+                lbl.innerHTML = `<input type="checkbox" class="gr-select-chk" value="${num}" ${isChecked} style="width:18px;height:18px;accent-color:#00ffcc;"> <span><b>#${num}</b> - ${nome}</span>`;
+                grid.appendChild(lbl);
+            });
+            document.getElementById('gr-player-modal').style.display = 'flex';
+        }
+
+        function confirmGRSelection() {
+            let checkboxes = document.querySelectorAll('.gr-select-chk:checked');
+            activeGRs = [];
+            checkboxes.forEach(chk => {
+                let num = chk.value;
+                let atleta = convocadosGR.find(p => (p.number || p.dorsal) == num);
+                if (atleta) activeGRs.push(atleta);
+            });
+
+            if (activeGRs.length === 0) {
+                alert("Selecione pelo menos um guarda-redes.");
+                return;
+            }
+
+            let namesStr = activeGRs.map(p => `#${p.number || p.dorsal} ${p.name || p.nome}`).join(', ');
+            document.getElementById('sidebar-gr-name').innerText = namesStr;
+            document.getElementById('gr-player-modal').style.display = 'none';
+        }
+
+        function handlePitchClick(event) {
+            if (activeGRs.length === 0) {
+                alert("Por favor, selecione primeiro pelo menos um Guarda-Redes ativo.");
+                openGRSelectModal();
+                return;
+            }
+            if (event.target.classList.contains('tactical-marker')) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            pendingX = ((event.clientX - rect.left) / rect.width) * 100;
+            pendingY = ((event.clientY - rect.top) / rect.height) * 100;
+            pendingActionType = 'pitch';
+            promptPickGR();
+        }
+
+        function handleGoalClick(event) {
+            if (activeGRs.length === 0) {
+                alert("Por favor, selecione primeiro pelo menos um Guarda-Redes ativo.");
+                openGRSelectModal();
+                return;
+            }
+            if (event.target.classList.contains('tactical-marker')) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            let x = ((event.clientX - rect.left) / rect.width) * 100;
+            let y = ((event.clientY - rect.top) / rect.height) * 100;
+
+            let colIndex = Math.floor((x / 100) * 8) + 1;
+            if (colIndex > 8) colIndex = 8;
+            let rowIndex = Math.floor((y / 100) * 4) + 1;
+            if (rowIndex > 4) rowIndex = 4;
+
+            selectedGoalZone = `Zona [C${colIndex}, L${rowIndex}]`;
+
+            pendingX = x;
+            pendingY = y;
+            pendingActionType = 'goal';
+            promptPickGR();
+        }
+
+        function promptPickGR() {
+            let grid = document.getElementById('gr-pick-grid');
+            grid.innerHTML = '';
+
+            activeGRs.forEach(p => {
+                let num = p.number || p.dorsal || '';
+                let nome = p.name || p.nome || '';
+                let btn = document.createElement('button');
+                btn.className = 'tactical-action-btn';
+                btn.style.padding = '12px';
+                btn.innerText = `#${num} - ${nome}`;
+                btn.onclick = function() {
+                    selectedGRForAction = p;
+                    document.getElementById('gr-pick-modal').style.display = 'none';
+                    openActionModal();
+                };
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('gr-pick-modal').style.display = 'flex';
+        }
+
+        function openActionModal() {
+            let title = document.getElementById('gr-modal-title');
+            let subtitle = document.getElementById('gr-modal-subtitle');
+            let container = document.getElementById('gr-action-container');
+
+            let num = selectedGRForAction.number || selectedGRForAction.dorsal || '';
+            let nome = selectedGRForAction.name || selectedGRForAction.nome || '';
+            title.innerText = `Ação para GR #${num} (${nome})`;
+
+            if (pendingActionType === 'goal') {
+                subtitle.innerText = `🎯 Alvo na Baliza (32 Zonas): ${selectedGoalZone}`;
+            } else {
+                let isRedArea = (pendingX < 30 && pendingY >= 20 && pendingY <= 80);
+                let zoneDesc = isRedArea ? "Zona Vermelha (Área de 6m)" : (pendingX <= 55 ? "Zona Amarela (Até 10 metros)" : "Zona Verde (>10 metros)");
+                subtitle.innerText = `📍 Origem: ${zoneDesc} (X: ${pendingX.toFixed(0)}%, Y: ${pendingY.toFixed(0)}%)`;
+            }
+
+            let defesasHTML = `
+                <div style="flex: 1; background: #15221c; border: 1px solid #1e4d35; border-radius: 6px; padding: 8px;">
+                    <h4 style="margin: 0 0 6px 0; color: #00ffcc; font-size: 0.8rem; text-align: center;">🟢 DEFESAS / AÇÕES POSITIVAS</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="tactical-action-btn action-positive" onclick="confirmAction('Defesa excelente', '#00ffcc')">🌟 Defesa excelente</button>
+                        <button class="tactical-action-btn action-positive" onclick="confirmAction('Defesa Dificil', '#00ffcc')">🙌 Defesa Dificil</button>
+                        <button class="tactical-action-btn action-positive" onclick="confirmAction('Defesa no limites', '#00ffcc')">🛡️ Defesa no limites</button>
+                    </div>
+                </div>`;
+
+            let golosHTML = `
+                <div style="flex: 1; background: #221515; border: 1px solid #4d1e1e; border-radius: 6px; padding: 8px;">
+                    <h4 style="margin: 0 0 6px 0; color: #ff5555; font-size: 0.8rem; text-align: center;">🔴 GOLOS SOFRIDOS / ERROS</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Posição errada', '#ff5555')">📍 Posição errada</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Pé de apoio errado', '#ff5555')">🦶 Pé de apoio errado</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Golo Defensável', '#ff5555')">⚽ Golo Defensável</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Golo no 1º Poste', '#ff5555')">🚪 Golo no 1º Poste</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Mancha errada', '#ff5555')">❌ Mancha errada</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Má reposição', '#ff5555')">🔄 Má reposição</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Saida em falso', '#ff5555')">⚠️ Saida em falso</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Má temporização', '#ff5555')">⏱️ Má temporização</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmAction('Desatenção', '#ff5555')">💤 Desatenção</button>
+                    </div>
+                </div>`;
+
+            container.innerHTML = defesasHTML + golosHTML;
+            document.getElementById('gr-action-modal').style.display = 'flex';
+        }
+
+        function confirmAction(actionName, customColor) {
+            document.getElementById('gr-action-modal').style.display = 'none';
+            let clock = document.getElementById('gr-timer').innerText;
+            let num = selectedGRForAction.number || selectedGRForAction.dorsal || '';
+            let nome = selectedGRForAction.name || selectedGRForAction.nome || '';
+            let atletaStr = `#${num} ${nome}`;
+
+            let detail = '';
+            let markerColor = customColor || '#00ffcc';
+            let targetType = pendingActionType === 'goal' ? 'goal' : 'pitch';
+
+            if (pendingActionType === 'goal') {
+                detail = `Alvo: ${selectedGoalZone}`;
+            } else {
+                let isRedArea = (pendingX < 30 && pendingY >= 20 && pendingY <= 80);
+                if (isRedArea) {
+                    detail = `Zona Vermelha (Área de 6m)`;
+                } else if (pendingX <= 55) {
+                    detail = `Zona Amarela (Até 10m)`;
+                } else {
+                    detail = `Zona Verde (>10m)`;
+                }
+                detail += ` (X:${pendingX.toFixed(0)}%, Y:${pendingY.toFixed(0)}%)`;
+            }
+
+            let targetEl = pendingActionType === 'goal' ? document.getElementById('goal-front') : document.getElementById('pitch-half');
+            createDOMMarker(targetEl, pendingX, pendingY, num, markerColor);
+
+            periodMarkers[currentPeriod].push({
+                target: targetType,
+                x: pendingX,
+                y: pendingY,
+                label: num,
+                color: markerColor
+            });
+
+            let logEntry = {
+                periodo: `${currentPeriod}º Período`,
+                tempo: clock,
+                atleta: atletaStr,
+                tipoVista: pendingActionType === 'goal' ? 'Baliza Frontal (32 Zonas)' : 'Meia Pista (Zonas)',
+                detalhe: detail,
+                acao: actionName,
+                color: markerColor
+            };
+
+            grLogs[currentPeriod].push(logEntry);
+            syncLogs();
+            appendLogUI(logEntry);
+        }
+
+        function createDOMMarker(container, x, y, label, color) {
+            let m = document.createElement('div');
+            m.className = 'tactical-marker';
+            m.style.left = `${x}%`;
+            m.style.top = `${y}%`;
+            m.style.background = color;
+            m.style.color = (color === '#ffcc00') ? '#000' : '#fff';
+            m.innerText = label;
+            container.appendChild(m);
+        }
+
+        function undoLastAction() {
+            if (grLogs[currentPeriod].length === 0) {
+                alert("Sem registos neste período para desfazer.");
+                return;
+            }
+            grLogs[currentPeriod].pop();
+            periodMarkers[currentPeriod].pop();
+            
+            let markers = document.querySelectorAll('.tactical-marker');
+            if (markers.length > 0) markers[markers.length - 1].remove();
+
+            let logBox = document.getElementById('gr-action-log');
+            if (logBox.firstChild) logBox.firstChild.remove();
+            syncLogs();
+        }
+
+        function appendLogUI(l) {
+            let logBox = document.getElementById('gr-action-log');
+            let entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `[${l.periodo} - ${l.tempo}] <b>${l.atleta}</b> (${l.detalhe}): <span style="color:${l.color};">${l.acao}</span>`;
+            logBox.insertBefore(entry, logBox.firstChild);
+        }
+
+        function redrawLogs() {
+            let logBox = document.getElementById('gr-action-log');
+            logBox.innerHTML = '';
+            [1, 2].forEach(p => {
+                if (grLogs[p]) {
+                    grLogs[p].forEach(l => {
+                        let entry = document.createElement('div');
+                        entry.className = 'log-entry';
+                        entry.innerHTML = `[${p}ºP - ${l.tempo}] <b>${l.atleta}</b> (${l.detalhe}): <span style="color:${l.color};">${l.acao}</span>`;
+                        logBox.insertBefore(entry, logBox.firstChild);
+                    });
+                }
+            });
+        }
+
+        function syncLogs() {
+            sessionData.grLogs = grLogs;
+            sessionData.periodMarkers = periodMarkers;
+            localStorage.setItem('futsal_session_data', JSON.stringify(sessionData));
+        }
+
+        function closeModals() {
+            document.getElementById('gr-player-modal').style.display = 'none';
+            document.getElementById('gr-pick-modal').style.display = 'none';
+            document.getElementById('gr-action-modal').style.display = 'none';
+        }
+
+        function exportJSON() {
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionData, null, 2));
+            let a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `Sessao_Guarda_Redes_${sessionData.homeName || 'Dinamo'}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function exportJSONAuto(suffix) {
+            sessionData.grLogs = grLogs;
+            sessionData.periodMarkers = periodMarkers;
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionData, null, 2));
+            let a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `Backup_Automatico_GR_${sessionData.homeName || 'Dinamo'}_${suffix}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function exportExcel() {
+            let wb = XLSX.utils.book_new();
+            let data = [["Período", "Tempo", "Guarda-Redes", "Perspetiva", "Detalhe / Zona", "Ação Registada"]];
+            if (grLogs[1]) grLogs[1].forEach(l => data.push([l.periodo, l.tempo, l.atleta, l.tipoVista, l.detalhe, l.acao]));
+            if (grLogs[2]) grLogs[2].forEach(l => data.push([l.periodo, l.tempo, l.atleta, l.tipoVista, l.detalhe, l.acao]));
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Analise GR");
+            XLSX.writeFile(wb, `Relatorio_Guarda_Redes.xlsx`);
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF('p', 'mm', 'a4');
+            let home = sessionData.homeName || 'Dinamo';
+            let away = sessionData.awayName || 'Adversário';
+
+            let origPeriod = currentPeriod;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Relatório de Análise de Guarda-Redes", 14, 15);
+            doc.setFontSize(11);
+            doc.text(`Equipa: ${home} vs ${away}`, 14, 23);
+
+            let yPos = 32;
+
+            for (let p of [1, 2]) {
+                switchPeriod(p);
+                await new Promise(r => setTimeout(r, 200));
+
+                if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13);
+                doc.setTextColor(0, 255, 204);
+                doc.text(`--- ${p}º Período ---`, 14, yPos);
+                yPos += 8;
+
+                try {
+                    let pitchEl = document.getElementById('pitch-half');
+                    let goalEl = document.getElementById('goal-front');
+
+                    let canvasPitch = await html2canvas(pitchEl, { scale: 1.5, backgroundColor: '#141414' });
+                    let canvasGoal = await html2canvas(goalEl, { scale: 1.5, backgroundColor: '#141414' });
+
+                    let imgPitchData = canvasPitch.toDataURL('image/png');
+                    let imgGoalData = canvasGoal.toDataURL('image/png');
+
+                    if (yPos + 55 > 280) { doc.addPage(); yPos = 20; }
+
+                    let renderWidth = 85;
+                    let pitchRenderH = (canvasPitch.height * renderWidth) / canvasPitch.width;
+                    let goalRenderH = (canvasGoal.height * renderWidth) / canvasGoal.width;
+
+                    doc.addImage(imgPitchData, 'PNG', 14, yPos, renderWidth, pitchRenderH);
+                    doc.addImage(imgGoalData, 'PNG', 110, yPos, renderWidth, goalRenderH);
+                    yPos += Math.max(pitchRenderH, goalRenderH) + 6;
+                } catch (err) {
+                    console.error("Erro ao capturar imagens para o PDF", err);
+                }
+
+                if (grLogs[p] && grLogs[p].length > 0) {
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    doc.setTextColor(200, 200, 200);
+                    doc.text("Registo de Ações:", 14, yPos);
+                    yPos += 6;
+
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(8);
+                    grLogs[p].forEach((l, idx) => {
+                        if (yPos > 275) { doc.addPage(); yPos = 20; }
+                        doc.text(`${idx + 1}. [${l.tempo}] ${l.atleta} | ${l.detalhe} -> ${l.acao}`, 18, yPos);
+                        yPos += 6;
+                    });
+                } else {
+                    doc.setFont("helvetica", "italic");
+                    doc.setFontSize(9);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text("Sem registos de ações neste período.", 14, yPos);
+                    yPos += 8;
+                }
+                yPos += 10;
+            }
+
+            switchPeriod(origPeriod);
+
+            doc.save(`Relatorio_Guarda_Redes_${home}.pdf`);
+        }
+        
+        // 1. Função de Salvamento Contínuo em Segundo Plano
+        function autoSaveSession() {
+            if (typeof sessionData !== 'undefined') {
+                if (typeof tacticalLogs !== 'undefined') sessionData.tacticalLogs = tacticalLogs;
+                if (typeof grLogs !== 'undefined') sessionData.grLogs = grLogs;
+                if (typeof players !== 'undefined') sessionData.players = players;
+                localStorage.setItem('futsal_session_data', JSON.stringify(sessionData));
+            }
+        }
+        setInterval(() => { autoSaveSession(); }, 30000);
+
+        window.addEventListener('beforeunload', function (e) {
+            autoSaveSession();
+            e.preventDefault();
+            e.returnValue = 'Atenção: Certifique-se de que exportou o ficheiro JSON da sessão antes de sair!';
+            return e.returnValue;
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            let savedBackup = localStorage.getItem('futsal_session_data');
+            if (savedBackup) {
+                try {
+                    let parsed = JSON.parse(savedBackup);
+                    if (typeof sessionData !== 'undefined' && !sessionData.homeName) {
+                        sessionData = parsed;
+                    }
+                } catch (err) {}
+            }
+        });
+    </script>
+</body>
+</html>

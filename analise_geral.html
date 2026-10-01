@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Geral da Equipa - Futsal PRO</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js para os Gráficos Desportivos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- PAINEL PRINCIPAL DE ANÁLISE GERAL -->
+    <div class="main-layout" id="main-app" style="display: flex;">
+        <div class="left-panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 id="home-team-title" style="margin: 0;">Plantel Convocado (DINAMO)</h3>
+                    <span id="logged-user-display" style="font-size: 0.75rem; color: #00ffcc; font-weight: bold;">📊 Módulo: ANÁLISE GERAL</span>
+                </div>
+                <div class="header-right-actions">
+                    <button class="btn-tab active" onclick="switchLeftTab('plantel')">Atletas</button>
+                    <button class="btn-tab" onclick="switchLeftTab('graficos')">Gráficos</button>
+                </div>
+            </div>
+
+            <div class="session-actions-box" style="display: flex; gap: 6px;">
+                <button class="btn-session-save" style="flex: 1;" onclick="exportSessionJSON()">💾 Guardar Sessão (.json)</button>
+                <button class="btn-session-save" style="flex: 1; background: #222; border: 1px solid #00ffcc; color: #00ffcc;" onclick="returnToStep4()">Voltar Módulos</button>
+            </div>
+
+            <div id="tab-plantel" class="tab-content active">
+                <div class="players-grid-container" id="players-container"></div>
+                <div class="observations-box">
+                    <label for="match-observations"><b>Observações do Jogo:</b></label>
+                    <textarea id="match-observations" placeholder="Notas táticas, arbitragem, lesões, etc..."></textarea>
+                </div>
+            </div>
+
+            <div id="tab-graficos" class="tab-content">
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h4>Tempos de Jogo dos Atletas (Minutos)</h4>
+                        <canvas id="chartMinutes"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h4>Remates e Golos por Equipa</h4>
+                        <canvas id="chartShots"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h4>Entradas em Jogo (Substituições)</h4>
+                        <canvas id="chartSubs"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="scoreboard-container">
+                <div class="timer-section">
+                    <div class="teams-input-box" style="display:none;">
+                        <input type="text" id="input-home-name" value="DINAMO">
+                        <input type="text" id="input-away-name" value="VISITANTE">
+                    </div>
+
+                    <div class="scoreboard-top-box">
+                        <div class="scoreboard-team-side">
+                            <span class="sb-team-name" id="sb-home-label">DINAMO</span>
+                            <div style="display: flex; align-items: center; gap: 4px; margin: 2px 0;">
+                                <button class="btn-corr" onclick="correctStatValue('home-goals', -1)">-</button>
+                                <span class="sb-team-goals" id="sb-home-goals">0</span>
+                                <button class="btn-corr" onclick="correctStatValue('home-goals', 1)">+</button>
+                            </div>
+                            <span class="sb-team-fouls" id="sb-home-fouls">Faltas: 0/5</span>
+                        </div>
+                        <div class="scoreboard-center-clock">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(-1)" title="Menos 1 Segundo">-1s</button>
+                                <h2 id="timer" style="font-size: 1.9rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
+                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(1)" title="Mais 1 Segundo">+1s</button>
+                            </div>
+                            
+                            <div id="red-card-timer-box" style="display: none; margin-top: 4px; background: rgba(255, 85, 85, 0.2); border: 1px solid #ff5555; padding: 2px 8px; border-radius: 4px;">
+                                <span id="red-card-timer-text" style="font-size: 0.8rem; color: #ff5555; font-weight: bold;">🟥 EXCLUSÃO: 02:00</span>
+                            </div>
+
+                            <div class="timer-config-row" style="margin:2px 0 0 0;">
+                                <label for="timer-duration">Min:</label>
+                                <input type="number" id="timer-duration" value="20" min="1" max="60" onchange="changeTimerDuration()" style="width:35px; text-align:center;">
+                            </div>
+                        </div>
+                        <div class="scoreboard-team-side away-side">
+                            <span class="sb-team-name" id="sb-away-label">VISITANTE</span>
+                            <div style="display: flex; align-items: center; gap: 4px; margin: 2px 0;">
+                                <button class="btn-corr" onclick="correctStatValue('away-goals', -1)">-</button>
+                                <span class="sb-team-goals" id="sb-away-goals">0</span>
+                                <button class="btn-corr" onclick="correctStatValue('away-goals', 1)">+</button>
+                            </div>
+                            <span class="sb-team-fouls" id="sb-away-fouls">Faltas: 0/5</span>
+                        </div>
+                    </div>
+
+                    <div class="period-selector">
+                        <button id="btn-p1" class="period-btn active" onclick="switchPeriod(1)">1º Período</button>
+                        <button id="btn-p2" class="period-btn" onclick="switchPeriod(2)">2º Período</button>
+                        <div class="report-buttons">
+                            <button class="btn-report-excel" onclick="exportReportExcel()">Excel</button>
+                            <button class="btn-report-pdf" onclick="exportReportPDF()">PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="timeouts-container">
+                        <div class="to-team">
+                            <span id="to-home-label">Time-out Dinamo:</span>
+                            <button id="timeout-home-btn" onclick="requestTimeout('home')">Pedir Pausa</button>
+                            <span id="timeout-home-status" class="to-used">Disponível</span>
+                        </div>
+                        <div class="to-team">
+                            <span id="to-away-label">Time-out Visitante:</span>
+                            <button id="timeout-away-btn" onclick="requestTimeout('away')">Pedir Pausa</button>
+                            <span id="timeout-away-status" class="to-used">Disponível</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões iniciar/pausar afastados dos períodos -->
+                    <div class="timer-controls-pro">
+                        <button class="btn-start-pro" onclick="startTimer()">Iniciar</button>
+                        <button class="btn-pause-pro" onclick="pauseTimer()">Pausar</button>
+                    </div>
+                </div>
+
+                <!-- Painel de Estatísticas / Ações -->
+                <div class="stats-panel">
+                    <div class="stats-team-col">
+                        <h4 class="team-title-home" id="stats-home-title">DINAMO</h4>
+                        <div class="stat-row large-stat-row">
+                            <span>Faltas</span>
+                            <div class="stat-buttons"><button onclick="modifyStat('home', 'livres', -1)">-</button><span id="home-livres">0</span><button onclick="modifyStat('home', 'livres', 1)">+</button></div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Cantos</span>
+                            <div class="stat-buttons"><button onclick="modifyStat('home', 'cantos', -1)">-</button><span id="home-cantos">0</span><button onclick="modifyStat('home', 'cantos', 1)">+</button></div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Lançamentos</span>
+                            <div class="stat-buttons"><button onclick="modifyStat('home', 'lancamentos', -1)">-</button><span id="home-lancamentos">0</span><button onclick="modifyStat('home', 'lancamentos', 1)">+</button></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-timeline">
+                        <h4>Registo de Ações</h4>
+                        <div class="log-box" id="action-log"></div>
+                    </div>
+
+                    <div class="stats-team-col">
+                        <h4 class="team-title-away" id="stats-away-title">VISITANTE</h4>
+                        <div class="stat-row large-stat-row">
+                            <div class="stat-buttons"><button onclick="modifyStat('away', 'livres', -1)">-</button><span id="away-livres">0</span><button onclick="modifyStat('away', 'livres', 1)">+</button></div>
+                            <span>Faltas</span>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-buttons"><button onclick="modifyStat('away', 'cantos', -1)">-</button><span id="away-cantos">0</span><button onclick="modifyStat('away', 'cantos', 1)">+</button></div>
+                            <span>Cantos</span>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-buttons"><button onclick="modifyStat('away', 'lancamentos', -1)">-</button><span id="away-lancamentos">0</span><button onclick="modifyStat('away', 'lancamentos', 1)">+</button></div>
+                            <span>Lançamentos</span>
+                        </div>
+                        <div class="stat-row away-cards-row" style="background: #1f1414; border: 1px solid #442222; margin-top: 4px; padding: 6px;">
+                            <span style="font-size: 0.7rem; color: #ff5555; font-weight: bold;">Cartões Adversário:</span>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <button class="card-square yellow-sq big-card" onclick="addAwayCard('yellow')" title="Amarelo Visitante">🟨 <span id="away-yellow-count">0</span></button>
+                                <button class="card-square red-sq big-card" onclick="addAwayCard('red')" title="Vermelho Visitante">🟥 <span id="away-red-count">0</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Apenas 2 Campos com Controlo Direto de Correção (+ / -) (Sem campos de remate) -->
+                <div class="pitch-container-grid" id="capture-pitch-container">
+                    <div class="pitch-row">
+                        <div class="half-pitch-wrapper">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
+                                <h3 id="pitch-golo-home-title" style="margin:0;">GOLO DINAMO</h3>
+                                <div style="display: flex; gap: 2px;">
+                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'goal', -1)">-</button>
+                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'goal', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="futsal-pitch pitch-goal" id="pitch-goal-home" ondblclick="handlePitchDoubleClick(event, 'home', 'goal')">
+                                <div class="goal-semicircle-only"></div>
+                            </div>
+                        </div>
+                        <div class="half-pitch-wrapper">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
+                                <h3 id="pitch-golo-away-title" style="margin:0;">GOLO VISITANTE</h3>
+                                <div style="display: flex; gap: 2px;">
+                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'goal', -1)">-</button>
+                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'goal', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="futsal-pitch pitch-goal pitch-away-visual" id="pitch-goal-away" ondblclick="handlePitchDoubleClick(event, 'away', 'goal')">
+                                <div class="goal-semicircle-only top-goal"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="app-footer">
+                    andrepe @ 2026
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal / Seletor em Miniatura para Atletas Casa -->
+    <div id="player-selector-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h3>Selecione o Atleta Autor do Lance</h3>
+            <div id="modal-players-grid" class="modal-players-grid"></div>
+            <button class="modal-close-btn" onclick="closePlayerModal()">Cancelar / Sem Atleta</button>
+        </div>
+    </div>
+
+    <!-- Scripts de Biblioteca e Lógica Geral (app.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        function switchLeftTab(tabName) {
+            document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tabName === 'plantel') {
+                document.getElementById('tab-plantel').classList.add('active');
+                event.target.classList.add('active');
+            } else if (tabName === 'graficos') {
+                document.getElementById('tab-graficos').classList.add('active');
+                event.target.classList.add('active');
+                if (typeof updateChartsData === 'function') updateChartsData();
+            }
+        }
+
+        function returnToStep4() {
+            let saved = localStorage.getItem('futsal_session_data');
+            if (saved) {
+                try {
+                    let session = JSON.parse(saved);
+                    session.gotoStep4 = true;
+                    localStorage.setItem('futsal_session_data', JSON.stringify(session));
+                } catch(e) {}
+            }
+            window.location.href = 'index.html';
+        }
+
+        window.onload = function() {
+            let saved = localStorage.getItem('futsal_session_data');
+            if (saved) {
+                try {
+                    let session = JSON.parse(saved);
+                    
+                    let listaAtletas = session.convocados || (session.roster ? session.roster.filter(p => p.selected === true) : []);
+                    if (listaAtletas.length === 0 && session.roster) {
+                        listaAtletas = session.roster;
+                    }
+
+                    players = listaAtletas.map(p => ({
+                        number: p.number || p.dorsal,
+                        name: p.name || p.nome,
+                        isOnField: false,
+                        secondsPlayedP1: p.secondsPlayedP1 || 0,
+                        secondsRestedP1: p.secondsRestedP1 || 0,
+                        secondsPlayedP2: p.secondsPlayedP2 || 0,
+                        secondsRestedP2: p.secondsRestedP2 || 0,
+                        substitutionsCount: p.substitutionsCount || 0,
+                        yellowCards: p.yellowCards || 0,
+                        redCards: p.redCards || 0
+                    }));
+
+                    if (session.homeName) {
+                        let home = session.homeName.toUpperCase();
+                        document.getElementById('sb-home-label').innerText = home;
+                        document.getElementById('stats-home-title').innerText = home;
+                        document.getElementById('home-team-title').innerText = `Plantel Convocado (${home})`;
+                        document.getElementById('input-home-name').value = home;
+                    }
+                    if (session.awayName) {
+                        let away = session.awayName.toUpperCase();
+                        document.getElementById('sb-away-label').innerText = away;
+                        document.getElementById('stats-away-title').innerText = away;
+                        document.getElementById('input-away-name').value = away;
+                    }
+                } catch(e) { console.error("Erro ao carregar dados em analise_geral:", e); }
+            }
+
+            if (typeof initAppAfterLogin === 'function') {
+                initAppAfterLogin();
+            } else if (typeof renderPlayersList === 'function') {
+                renderPlayersList();
+            }
+        };
+    </script>
+</body>
+</html>

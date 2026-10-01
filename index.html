@@ -1,544 +1,434 @@
-<!-- index.html - Análise Futsal PRO -->
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Futsal PRO</title>
+    <title>Analise Futsal PRO - Painel Principal</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Chart.js para os Gráficos Desportivos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            box-sizing: border-box;
+        }
+        .step-section { display: none; }
+        .step-section.active { display: block; }
+        h2 { color: #00ffcc; text-align: center; margin-top: 0; margin-bottom: 20px; font-size: 1.5rem; }
+        .login-input-group { margin-bottom: 15px; }
+        .login-input-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #bbb; }
+        .login-input-group input, .login-input-group select {
+            width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; box-sizing: border-box; font-size: 1rem;
+        }
+        .btn-action {
+            width: 100%; padding: 14px; background: #00ffcc; color: #000; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; transition: background 0.2s;
+        }
+        .btn-action:hover { background: #00cca3; }
+        .btn-secondary { background: #333; color: #00ffcc; border: 1px solid #00ffcc; }
+        .btn-secondary:hover { background: #222; }
+        
+        .selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 15px; }
+        .selection-card {
+            background: #222; border: 2px solid #444; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+        }
+        .selection-card:hover { border-color: #00ffcc; background: #252a28; transform: translateY(-2px); }
+        .selection-card h3 { margin: 0; color: #00ffcc; font-size: 1.1rem; }
+        .selection-card p { margin: 0; font-size: 0.8rem; color: #aaa; line-height: 1.3; }
+        
+        #roster-checklist-container {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 10px; 
+            max-height: 50vh;
+            min-height: 200px;
+            overflow-y: auto; 
+            padding: 10px; 
+            background: #121212; 
+            border: 1px solid #333; 
+            border-radius: 6px; 
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+
+        .player-checkbox-item {
+            display: flex; align-items: center; gap: 10px; background: #222; padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; color: #fff; border: 1px solid #444; cursor: pointer; transition: border-color 0.2s;
+        }
+        .player-checkbox-item:hover { border-color: #00ffcc; }
+        .player-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #00ffcc; }
+        
+        .step-indicator { text-align: center; font-size: 0.8rem; color: #777; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .main-container { padding: 15px; }
+            #roster-checklist-container { grid-template-columns: 1fr; }
+            h2 { font-size: 1.25rem; }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ECRÃ DE LOGIN -->
-    <div id="login-screen">
-        <div class="login-card">
-            <h2>Futsal PRO Login</h2>
+    <div class="main-container">
+        <!-- PASSO 1: LOGIN E IMPORTAÇÃO JSON -->
+        <div id="step-1" class="step-section active">
+            <div class="step-indicator">Passo 1 de 4</div>
+            <h2>🔐 Autenticação Analise Futsal PRO</h2>
+            
+            <div class="login-input-group" style="background: #1e1e1e; padding: 12px; border-radius: 6px; border: 1px dashed #00ffcc; margin-bottom: 20px;">
+                <label style="color: #00ffcc; font-weight: bold;">📂 Importar Sessão Anterior (.json):</label>
+                <input type="file" id="import-json-file" accept=".json" onchange="loadSessionJSON(event)" style="padding: 8px; margin-top: 5px;">
+                <div id="json-load-status" style="font-size: 0.8rem; color: #ffcc00; margin-top: 6px;">Nenhum ficheiro importado. Pode importar ficheiros guardados em passos ou módulos anteriores.</div>
+            </div>
+
             <div class="login-input-group">
-                <label for="login-user">Utilizador</label>
-                <input type="text" id="login-user" placeholder="Insira o username">
+                <label>Utilizador / Treinador:</label>
+                <input type="text" id="login-user" placeholder="Nome do Treinador/Analista">
             </div>
             <div class="login-input-group">
-                <label for="login-pass">Palavra-passe</label>
-                <input type="password" id="login-pass" placeholder="Insira a password" onkeydown="if(event.key === 'Enter') handleLogin()">
+                <label>Palavra-passe:</label>
+                <input type="password" id="login-pass" placeholder="Password">
             </div>
-            <button class="btn-login" onclick="handleLogin()">Entrar</button>
-            <div id="login-error"></div>
+            <button class="btn-action" onclick="handleLogin()">Entrar no Sistema</button>
         </div>
-    </div>
 
-    <!-- ECRÃ DE CONFIGURAÇÃO INICIAL DO JOGO -->
-    <div id="setup-game-screen" style="display: none;">
-        <div class="login-card" style="width: 440px; text-align: left;">
-            <h2 style="text-align: center;">Configuração do Jogo</h2>
+        <!-- PASSO 2: CONFIGURAÇÃO DO JOGO E ESCALÃO -->
+        <div id="step-2" class="step-section">
+            <div class="step-indicator">Passo 2 de 4</div>
+            <h2>⚙️ Configuração do Jogo</h2>
+            
+            <div class="login-input-group" style="margin-top: 15px;">
+                <label>Nome da Equipa da Casa (A sua equipa):</label>
+                <input type="text" id="cfg-home-name" value="GRC Dínamo Sanjoanense">
+            </div>
+            <div class="login-input-group">
+                <label>Nome da Equipa Visitante:</label>
+                <input type="text" id="cfg-away-name" value="Adversário Futsal">
+            </div>
             
             <div class="login-input-group">
-                <label>Equipa Casa:</label>
-                <input type="text" id="setup-home" value="Dinamo" readonly style="background: #2b2b2b; color: #00ffcc; font-weight: bold;">
-            </div>
-            
-            <div class="login-input-group">
-                <label>Equipa Visitante:</label>
-                <input type="text" id="setup-away" placeholder="Nome da outra equipa" value="Visitante">
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <div class="login-input-group" style="flex: 1;">
-                    <label>Data:</label>
-                    <input type="date" id="setup-date">
-                </div>
-                <div class="login-input-group" style="flex: 1;">
-                    <label>Hora:</label>
-                    <input type="time" id="setup-time">
-                </div>
-            </div>
-
-            <div class="login-input-group">
-                <label>Local do Jogo:</label>
-                <input type="text" id="setup-location" placeholder="Ex: Pavilhão Municipal">
-            </div>
-
-            <div class="login-input-group">
-                <label>Escalão:</label>
-                <select id="setup-escalao" onchange="onSetupEscalaoChange()">
-                    <option value="Sub 15">Sub 15</option>
-                    <option value="Sub 19">Sub 19</option>
+                <label>Escalão / Categoria:</label>
+                <select id="cfg-select-escalao">
+                    <!-- Preenchido via plantels.js -->
                 </select>
             </div>
 
-            <button class="btn-login" onclick="proceedToRosterSetup()">Selecionar Plantel & Avançar</button>
-            
-            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; text-align: center;">
-                <label for="import-config-file" class="btn-secondary-action" style="display: block; text-align: center; padding: 10px; box-sizing: border-box; cursor: pointer;">Carregar Sessão - Jogo Guardada</label>
-                <input type="file" id="import-config-file" accept=".json" style="display: none;" onchange="importGameConfigJSON(event)">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-action btn-secondary" onclick="goToStep(1)">Voltar</button>
+                <button class="btn-action" onclick="proceedToStep3()">Avançar para Convocatória</button>
             </div>
         </div>
-    </div>
 
-    <!-- MODAL DE PRÉ-SELEÇÃO E EDIÇÃO DE ATLETAS -->
-    <div id="roster-select-modal" style="display: none;">
-        <div class="login-card" style="width: 640px; text-align: left; border-color: #00ffcc;">
-            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;" id="roster-modal-title">Selecione / Edite o Plantel (<span id="roster-count">0</span>/14 selecionados)</h3>
-            <p style="font-size: 0.78rem; color: #aaa; text-align: center; margin-bottom: 12px;">Podes ter até 20 atletas no plantel, mas só podes selecionar no máximo 14 para o jogo.</p>
+        <!-- PASSO 3: SELEÇÃO DE JOGADORES (CONVOCATÓRIA MÁX 14) -->
+        <div id="step-3" class="step-section">
+            <div class="step-indicator">Passo 3 de 4</div>
+            <h2>👥 Convocatória de Atletas (Máx. 14)</h2>
+            <p style="font-size: 0.85rem; color: #aaa; margin-top: 0; margin-bottom: 10px;" id="step3-subtitle">Selecione os atletas convocados:</p>
             
-            <div id="roster-editable-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; padding-right: 5px;">
-                <!-- Preenchido dinamicamente -->
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-secondary-action" style="margin-top: 0;" onclick="exportGameConfigJSON()">Guardar Sessão - Jogo</button>
-                <button class="btn-login" style="margin-top: 0; flex: 1;" onclick="confirmGameRoster()">Avançar para o Jogo</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PAINEL PRINCIPAL -->
-    <div class="main-layout" id="main-app" style="display: none;">
-        <div class="left-panel">
-            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.85rem; color: #00ffcc; font-weight: bold;" id="roster-count-label">Atletas selecionados: 0/14</span>
                 <div>
-                    <h3 id="home-team-title" style="margin: 0;">Plantel / Jogadores (DINAMO)</h3>
-                    <span id="logged-user-display" style="font-size: 0.75rem; color: #00ffcc; font-weight: bold;">👤 Utilizador: --</span>
-                </div>
-                <div class="header-right-actions">
-                    <button class="btn-tab active" onclick="switchLeftTab('plantel')">Atletas</button>
-                    <button class="btn-tab" onclick="switchLeftTab('graficos')">Gráficos</button>
+                    <button type="button" onclick="toggleAllRoster(true)" style="background:#222; color:#00ffcc; border:1px solid #00ffcc; font-size:0.8rem; padding:5px 10px; cursor:pointer; border-radius:4px;">Selecionar 14</button>
+                    <button type="button" onclick="toggleAllRoster(false)" style="background:#222; color:#ff5555; border:1px solid #ff5555; font-size:0.8rem; padding:5px 10px; cursor:pointer; border-radius:4px;">Nenhum</button>
                 </div>
             </div>
 
-            <div class="session-actions-box">
-                <button class="btn-session-save" onclick="exportSessionJSON()">Guardar Sessão (JSON)</button>
-                <label for="json-file" class="btn-session-load" style="cursor:pointer;">Importar Sessão (JSON)</label>
-                <input type="file" id="json-file" accept=".json" onchange="importSessionJSON(event)">
-            </div>
+            <div id="roster-checklist-container"></div>
 
-            <div id="tab-plantel" class="tab-content active">
-                <div class="players-grid-container" id="players-container"></div>
-                <div class="observations-box">
-                    <label for="match-observations"><b>Observações do Jogo:</b></label>
-                    <textarea id="match-observations" placeholder="Notas táticas, arbitragem, lesões, etc..."></textarea>
-                </div>
-            </div>
+            <button class="btn-action btn-secondary" onclick="exportSessionJSON()" style="margin-bottom: 5px; margin-top: 10px;">💾 Guardar Sessão / Convocatória (.json)</button>
 
-            <div id="tab-graficos" class="tab-content">
-                <div class="charts-container">
-                    <div class="chart-wrapper">
-                        <h4>Tempos de Jogo dos Atletas (Minutos)</h4>
-                        <canvas id="chartMinutes"></canvas>
-                    </div>
-                    <div class="chart-wrapper">
-                        <h4>Remates e Golos por Equipa</h4>
-                        <canvas id="chartShots"></canvas>
-                    </div>
-                    <div class="chart-wrapper">
-                        <h4>Entradas em Jogo (Substituições)</h4>
-                        <canvas id="chartSubs"></canvas>
-                    </div>
-                </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-action btn-secondary" onclick="goToStep(2)">Voltar</button>
+                <button class="btn-action" onclick="saveAndProceedToStep4()">Concluir Configuração</button>
             </div>
         </div>
 
-        <div class="right-panel">
-            <div class="scoreboard-container">
-                <div class="timer-section">
-                    <div class="teams-input-box" style="display:none;">
-                        <input type="text" id="input-home-name" value="DINAMO">
-                        <input type="text" id="input-away-name" value="VISITANTE">
-                    </div>
-
-                    <div class="scoreboard-top-box">
-                        <div class="scoreboard-team-side">
-                            <span class="sb-team-name" id="sb-home-label">DINAMO</span>
-                            <div style="display: flex; align-items: center; gap: 4px; margin: 2px 0;">
-                                <button class="btn-corr" onclick="correctStatValue('home-goals', -1)">-</button>
-                                <span class="sb-team-goals" id="sb-home-goals">0</span>
-                                <button class="btn-corr" onclick="correctStatValue('home-goals', 1)">+</button>
-                            </div>
-                            <span class="sb-team-fouls" id="sb-home-fouls">Faltas: 0/5</span>
-                        </div>
-                        <div class="scoreboard-center-clock">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(-1)" title="Menos 1 Segundo">-1s</button>
-                                <h2 id="timer" style="font-size: 1.9rem; margin: 0; color: #00ffcc; letter-spacing: 1px;">20:00</h2>
-                                <button class="btn-clock-adj" onclick="adjustTimerSeconds(1)" title="Mais 1 Segundo">+1s</button>
-                            </div>
-                            
-                            <div id="red-card-timer-box" style="display: none; margin-top: 4px; background: rgba(255, 85, 85, 0.2); border: 1px solid #ff5555; padding: 2px 8px; border-radius: 4px;">
-                                <span id="red-card-timer-text" style="font-size: 0.8rem; color: #ff5555; font-weight: bold;">🟥 EXCLUSÃO: 02:00</span>
-                            </div>
-
-                            <div class="timer-config-row" style="margin:2px 0 0 0;">
-                                <label for="timer-duration">Min:</label>
-                                <input type="number" id="timer-duration" value="20" min="1" max="60" onchange="changeTimerDuration()" style="width:35px; text-align:center;">
-                            </div>
-                        </div>
-                        <div class="scoreboard-team-side away-side">
-                            <span class="sb-team-name" id="sb-away-label">VISITANTE</span>
-                            <div style="display: flex; align-items: center; gap: 4px; margin: 2px 0;">
-                                <button class="btn-corr" onclick="correctStatValue('away-goals', -1)">-</button>
-                                <span class="sb-team-goals" id="sb-away-goals">0</span>
-                                <button class="btn-corr" onclick="correctStatValue('away-goals', 1)">+</button>
-                            </div>
-                            <span class="sb-team-fouls" id="sb-away-fouls">Faltas: 0/5</span>
-                        </div>
-                    </div>
-
-                    <div class="period-selector">
-                        <button id="btn-p1" class="period-btn active" onclick="switchPeriod(1)">1º Período</button>
-                        <button id="btn-p2" class="period-btn" onclick="switchPeriod(2)">2º Período</button>
-                        <div class="report-buttons">
-                            <button class="btn-report-excel" onclick="exportReportExcel()">Excel</button>
-                            <button class="btn-report-pdf" onclick="exportReportPDF()">PDF</button>
-                        </div>
-                    </div>
-
-                    <div class="timer-controls-pro">
-                        <button class="btn-start-pro" onclick="startTimer()">Iniciar</button>
-                        <button class="btn-pause-pro" onclick="pauseTimer()">Pausar</button>
-                    </div>
-
-                    <div class="timeouts-container">
-                        <div class="to-team">
-                            <span id="to-home-label">Time-out Dinamo:</span>
-                            <button id="timeout-home-btn" onclick="requestTimeout('home')">Pedir Pausa</button>
-                            <span id="timeout-home-status" class="to-used">Disponível</span>
-                        </div>
-                        <div class="to-team">
-                            <span id="to-away-label">Time-out Visitante:</span>
-                            <button id="timeout-away-btn" onclick="requestTimeout('away')">Pedir Pausa</button>
-                            <span id="timeout-away-status" class="to-used">Disponível</span>
-                        </div>
-                    </div>
+        <!-- PASSO 4: ESCOLHA DO MÓDULO DE ANÁLISE -->
+        <div id="step-4" class="step-section">
+            <div class="step-indicator">Passo 4 de 4</div>
+            <h2>📊 Escolha o Módulo de Análise</h2>
+            <p style="font-size: 0.9rem; color: #ccc; text-align: center; margin-bottom: 20px; line-height: 1.4;">Configuração guardada com sucesso! Selecione abaixo o tipo de análise que pretende executar:</p>
+            
+            <div class="selection-grid">
+                <div class="selection-card" onclick="openTacticalModule()">
+                    <span style="font-size: 2.2rem;">⚽</span>
+                    <h3>Análise Detalhada Atletas</h3>
+                    <p>Módulo tático em campo 40x20 com cronómetro, zonas e registo por atleta.</p>
                 </div>
-
-                <!-- Painel de Estatísticas / Ações -->
-                <div class="stats-panel">
-                    <div class="stats-team-col">
-                        <h4 class="team-title-home" id="stats-home-title">DINAMO</h4>
-                        <div class="stat-row large-stat-row">
-                            <span>Faltas</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'livres', -1)">-</button><span id="home-livres">0</span><button onclick="modifyStat('home', 'livres', 1)">+</button></div>
-                        </div>
-                        <div class="stat-row">
-                            <span>Cantos</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'cantos', -1)">-</button><span id="home-cantos">0</span><button onclick="modifyStat('home', 'cantos', 1)">+</button></div>
-                        </div>
-                        <div class="stat-row">
-                            <span>Lançamentos</span>
-                            <div class="stat-buttons"><button onclick="modifyStat('home', 'lancamentos', -1)">-</button><span id="home-lancamentos">0</span><button onclick="modifyStat('home', 'lancamentos', 1)">+</button></div>
-                        </div>
-                    </div>
-
-                    <div class="stats-timeline">
-                        <h4>Registo de Ações</h4>
-                        <div class="log-box" id="action-log"></div>
-                    </div>
-
-                    <div class="stats-team-col">
-                        <h4 class="team-title-away" id="stats-away-title">VISITANTE</h4>
-                        <div class="stat-row large-stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'livres', -1)">-</button><span id="away-livres">0</span><button onclick="modifyStat('away', 'livres', 1)">+</button></div>
-                            <span>Faltas</span>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'cantos', -1)">-</button><span id="away-cantos">0</span><button onclick="modifyStat('away', 'cantos', 1)">+</button></div>
-                            <span>Cantos</span>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-buttons"><button onclick="modifyStat('away', 'lancamentos', -1)">-</button><span id="away-lancamentos">0</span><button onclick="modifyStat('away', 'lancamentos', 1)">+</button></div>
-                            <span>Lançamentos</span>
-                        </div>
-                        <div class="stat-row away-cards-row" style="background: #1f1414; border: 1px solid #442222; margin-top: 4px; padding: 6px;">
-                            <span style="font-size: 0.7rem; color: #ff5555; font-weight: bold;">Cartões Adversário:</span>
-                            <div style="display: flex; gap: 4px; align-items: center;">
-                                <button class="card-square yellow-sq big-card" onclick="addAwayCard('yellow')" title="Amarelo Visitante">🟨 <span id="away-yellow-count">0</span></button>
-                                <button class="card-square red-sq big-card" onclick="addAwayCard('red')" title="Vermelho Visitante / Apenas Registo">🟥 <span id="away-red-count">0</span></button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="selection-card" onclick="openGRModule()">
+                    <span style="font-size: 2.2rem;">🛡️</span>
+                    <h3>Análise de Guarda-Redes</h3>
+                    <p>Módulo específico de GR com baliza 3x2m (32 zonas) e meia-pista tática.</p>
                 </div>
-
-                <!-- 4 Campos com Controlo Direto de Correção (+ / -) -->
-                <div class="pitch-container-grid" id="capture-pitch-container">
-                    <div class="pitch-row">
-                        <div class="half-pitch-wrapper">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
-                                <h3 id="pitch-remate-home-title" style="margin:0;">REMATE DINAMO</h3>
-                                <div style="display: flex; gap: 2px;">
-                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'shot', -1)">-</button>
-                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'shot', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="futsal-pitch pitch-shot" id="pitch-shot-home" ondblclick="handlePitchDoubleClick(event, 'home', 'shot')">
-                                <div class="goal-semicircle-only"></div>
-                            </div>
-                        </div>
-                        <div class="half-pitch-wrapper">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
-                                <h3 id="pitch-remate-away-title" style="margin:0;">REMATE VISITANTE</h3>
-                                <div style="display: flex; gap: 2px;">
-                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'shot', -1)">-</button>
-                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'shot', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="futsal-pitch pitch-shot pitch-away-visual" id="pitch-shot-away" ondblclick="handlePitchDoubleClick(event, 'away', 'shot')">
-                                <div class="goal-semicircle-only top-goal"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pitch-row">
-                        <div class="half-pitch-wrapper">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
-                                <h3 id="pitch-golo-home-title" style="margin:0;">GOLO DINAMO</h3>
-                                <div style="display: flex; gap: 2px;">
-                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'goal', -1)">-</button>
-                                    <button class="btn-corr" onclick="modifyPitchStat('home', 'goal', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="futsal-pitch pitch-goal" id="pitch-goal-home" ondblclick="handlePitchDoubleClick(event, 'home', 'goal')">
-                                <div class="goal-semicircle-only"></div>
-                            </div>
-                        </div>
-                        <div class="half-pitch-wrapper">
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
-                                <h3 id="pitch-golo-away-title" style="margin:0;">GOLO VISITANTE</h3>
-                                <div style="display: flex; gap: 2px;">
-                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'goal', -1)">-</button>
-                                    <button class="btn-corr" onclick="modifyPitchStat('away', 'goal', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="futsal-pitch pitch-goal pitch-away-visual" id="pitch-goal-away" ondblclick="handlePitchDoubleClick(event, 'away', 'goal')">
-                                <div class="goal-semicircle-only top-goal"></div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="selection-card" onclick="openGeneralModule()">
+                    <span style="font-size: 2.2rem;">📈</span>
+                    <h3>Análise Geral Equipa</h3>
+                    <p>Painel de resumo coletivo e indicadores consolidados da equipa.</p>
                 </div>
-
-                <footer class="app-footer">
-                    andrepe @ 2026
-                </footer>
             </div>
+
+            <button class="btn-action btn-secondary" onclick="goToStep(3)" style="margin-top: 20px;">Voltar à Convocatória</button>
         </div>
     </div>
 
-    <!-- Modal / Seletor em Miniatura para Atletas Casa -->
-    <div id="player-selector-modal" class="modal-backdrop" style="display: none;">
-        <div class="modal-content">
-            <h3>Selecione o Atleta Autor do Lance</h3>
-            <div id="modal-players-grid" class="modal-players-grid"></div>
-            <button class="modal-close-btn" onclick="closePlayerModal()">Cancelar / Sem Atleta</button>
-        </div>
-    </div>
-
-    <!-- Scripts de Dados Externos -->
-    <script src="plantels.js"></script>
+    <!-- SCRIPTS EXTERNOS DE DADOS E UTILIZADORES -->
     <script src="users.js"></script>
-
+    <script src="plantels.js"></script>
     <script>
-        let loadedConfigData = null;
-        let loggedInUsername = "Treinador";
+        let currentSessionData = {
+            username: "Treinador",
+            homeName: "GRC Dínamo Sanjoanense",
+            awayName: "Adversário Futsal",
+            category: "Sub 19",
+            attackDirection: "left-to-right",
+            filterActions: "all",
+            roster: [],
+            tacticalLogs: { 1: [], 2: [] },
+            grLogs: { 1: [], 2: [] }
+        };
 
-        async function handleLogin() {
-            let userIn = document.getElementById('login-user').value.trim();
-            let passIn = document.getElementById('login-pass').value.trim();
-            let errorEl = document.getElementById('login-error');
+        function loadAvailableEscaloes() {
+            let selectEl = document.getElementById('cfg-select-escalao');
+            selectEl.innerHTML = '';
 
-            if (!userIn || !passIn) {
-                errorEl.innerText = "Por favor, preencha todos os campos.";
-                return;
-            }
+            if (typeof globalPlantelsData !== 'undefined' && globalPlantelsData.escaloes) {
+                let escKeys = Object.keys(globalPlantelsData.escaloes);
+                escKeys.forEach(escName => {
+                    let opt = document.createElement('option');
+                    opt.value = escName;
+                    opt.innerText = escName;
+                    selectEl.appendChild(opt);
+                });
 
-            let validUser = globalUsersList.find(u => u.username === userIn && u.password === passIn);
-
-            if (validUser) {
-                loggedInUsername = validUser.username;
-                let userDisplay = document.getElementById('logged-user-display');
-                if (userDisplay) {
-                    userDisplay.innerText = `👤 Utilizador: ${loggedInUsername.toUpperCase()}`;
-                }
-
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('setup-game-screen').style.display = 'flex';
-                document.getElementById('setup-date').valueAsDate = new Date();
-            } else {
-                errorEl.innerText = "Utilizador ou palavra-passe incorretos.";
-            }
-        }
-
-        function onSetupEscalaoChange() {
-            loadedConfigData = null;
-        }
-
-        function proceedToRosterSetup() {
-            let awayName = document.getElementById('setup-away').value.trim() || 'Visitante';
-            let local = document.getElementById('setup-location').value.trim();
-            let escalao = document.getElementById('setup-escalao').value;
-            let dataJogo = document.getElementById('setup-date').value;
-            let horaJogo = document.getElementById('setup-time').value;
-
-            document.getElementById('input-home-name').value = 'DINAMO';
-            document.getElementById('input-away-name').value = awayName;
-            document.getElementById('match-observations').value = `Local: ${local || 'N/D'} | Data: ${dataJogo} ${horaJogo} | Escalão: ${escalao}`;
-
-            updateTeamNames();
-
-            let teamRoster = [];
-            if (loadedConfigData && loadedConfigData.roster) {
-                teamRoster = loadedConfigData.roster;
-            } else {
-                teamRoster = (globalPlantelsData.escaloes[escalao] && globalPlantelsData.escaloes[escalao]["Dinamo"]) 
-                    ? globalPlantelsData.escaloes[escalao]["Dinamo"] 
-                    : [];
-            }
-
-            showEditableRosterModal(teamRoster);
-        }
-
-        function showEditableRosterModal(roster) {
-            document.getElementById('setup-game-screen').style.display = 'none';
-            let container = document.getElementById('roster-editable-list');
-            container.innerHTML = '';
-
-            for (let i = 0; i < 20; i++) {
-                let p = roster[i];
-                let isChecked = p ? (p.selected === true) : false;
-                let numVal = p ? p.number : (i + 1);
-                let nameVal = p ? p.name : `Atleta ${i + 1}`;
-
-                let div = document.createElement('div');
-                div.style.cssText = "display: flex; gap: 8px; align-items: center; background: #222; padding: 4px 8px; border-radius: 5px;";
-                div.innerHTML = `
-                    <input type="checkbox" id="check-p-${i}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px;" onchange="updateRosterCount()">
-                    <input type="number" id="num-p-${i}" value="${numVal}" style="width: 55px; padding: 4px; background: #111; color: #ffcc00; font-weight:bold; border: 1px solid #444; border-radius: 4px; text-align: center;">
-                    <input type="text" id="name-p-${i}" value="${nameVal}" style="flex: 1; padding: 4px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px;">
-                `;
-                container.appendChild(div);
-            }
-
-            updateRosterCount();
-            document.getElementById('roster-select-modal').style.display = 'flex';
-        }
-
-        function updateRosterCount() {
-            let count = 0;
-            for (let i = 0; i < 20; i++) {
-                let chk = document.getElementById(`check-p-${i}`);
-                if (chk && chk.checked) count++;
-            }
-            document.getElementById('roster-count').innerText = count;
-            if (count > 14) {
-                alert("Atenção: No máximo só podes selecionar 14 atletas para o jogo!");
-            }
-        }
-
-        function exportGameConfigJSON() {
-            let awayName = document.getElementById('setup-away').value.trim() || 'Visitante';
-            let local = document.getElementById('setup-location').value.trim();
-            let escalao = document.getElementById('setup-escalao').value;
-            let dataJogo = document.getElementById('setup-date').value;
-            let horaJogo = document.getElementById('setup-time').value;
-
-            let currentRosterConfig = [];
-            for (let i = 0; i < 20; i++) {
-                let chk = document.getElementById(`check-p-${i}`);
-                let num = parseInt(document.getElementById(`num-p-${i}`).value) || (i + 1);
-                let name = document.getElementById(`name-p-${i}`).value.trim() || `Atleta ${i + 1}`;
-                if (chk) {
-                    currentRosterConfig.push({ number: num, name: name, selected: chk.checked });
+                if (currentSessionData.category && globalPlantelsData.escaloes[currentSessionData.category]) {
+                    selectEl.value = currentSessionData.category;
                 }
             }
+        }
 
-            let configData = {
-                homeName: "Dinamo",
-                awayName: awayName,
-                location: local,
-                escalao: escalao,
-                date: dataJogo,
-                time: horaJogo,
-                roster: currentRosterConfig
+        function proceedToStep3() {
+            currentSessionData.homeName = document.getElementById('cfg-home-name').value;
+            currentSessionData.awayName = document.getElementById('cfg-away-name').value;
+            currentSessionData.category = document.getElementById('cfg-select-escalao').value;
+
+            // CORREÇÃO: Garante que o roster é um array antes de usar o .find(), evitando o erro "undefined"
+            if (!currentSessionData.roster) {
+                currentSessionData.roster = [];
+            }
+
+            if (typeof globalPlantelsData !== 'undefined' && globalPlantelsData.escaloes) {
+                let escData = globalPlantelsData.escaloes[currentSessionData.category];
+                if (escData && escData["Dinamo"]) {
+                    // Mantém seleções anteriores caso existam
+                    currentSessionData.roster = escData["Dinamo"].map(p => {
+                        let existing = currentSessionData.roster.find(item => item.number === p.number);
+                        return { ...p, selected: existing ? existing.selected : false };
+                    });
+                } else {
+                    currentSessionData.roster = [];
+                }
+            }
+            goToStep(3);
+        }
+
+        function goToStep(stepNum) {
+            document.querySelectorAll('.step-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`step-${stepNum}`).classList.add('active');
+
+            if (stepNum === 3) {
+                document.getElementById('step3-subtitle').innerText = `Atletas disponíveis (${currentSessionData.category} - Dinamo):`;
+                renderRosterChecklist();
+            }
+        }
+
+        function handleLogin() { 
+            let userInput = document.getElementById('login-user').value.trim();
+            if (userInput) {
+                currentSessionData.username = userInput;
+            }
+            goToStep(2); 
+        }
+
+        function loadSessionJSON(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let parsed = JSON.parse(e.target.result);
+                    currentSessionData = parsed;
+                    if (parsed.username) document.getElementById('login-user').value = parsed.username;
+                    if (parsed.homeName) document.getElementById('cfg-home-name').value = parsed.homeName;
+                    if (parsed.awayName) document.getElementById('cfg-away-name').value = parsed.awayName;
+                    if (parsed.category) {
+                        currentSessionData.category = parsed.category;
+                        let selectEl = document.getElementById('cfg-select-escalao');
+                        if (selectEl) selectEl.value = parsed.category;
+                    }
+                    
+                    document.getElementById('json-load-status').innerText = `Sessão importada com sucesso! Os dados foram preenchidos.`;
+                    document.getElementById('json-load-status').style.color = '#00ffcc';
+                } catch (err) { alert("Erro ao ler o ficheiro JSON."); }
             };
+            reader.readAsText(file);
+        }
 
-            let jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configData, null, 2));
+        function exportSessionJSON() {
+            currentSessionData.homeName = document.getElementById('cfg-home-name').value;
+            currentSessionData.awayName = document.getElementById('cfg-away-name').value;
+            currentSessionData.category = document.getElementById('cfg-select-escalao').value;
+
+            let checkboxes = document.querySelectorAll('.roster-chk');
+            if (checkboxes.length > 0) {
+                checkboxes.forEach(chk => {
+                    let idx = parseInt(chk.value);
+                    if (currentSessionData.roster[idx]) {
+                        currentSessionData.roster[idx].selected = chk.checked;
+                    }
+                });
+            }
+
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentSessionData, null, 2));
             let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", jsonStr);
-            downloadAnchor.setAttribute("download", `Dinamo_vs_${awayName}_${dataJogo}.json`);
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `sessao_futsal_${currentSessionData.homeName.replace(/\s+/g, '_')}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
         }
 
-        function importGameConfigJSON(event) {
-            let file = event.target.files[0];
-            if (!file) return;
+        function renderRosterChecklist() {
+            let container = document.getElementById('roster-checklist-container');
+            container.innerHTML = '';
+            let rosterList = currentSessionData.roster || [];
+            
+            rosterList.forEach((p, idx) => {
+                let isChecked = (p.selected === true) ? 'checked' : '';
+                let item = document.createElement('label');
+                item.className = 'player-checkbox-item';
+                item.innerHTML = `<input type="checkbox" class="roster-chk" value="${idx}" ${isChecked} onchange="updateSelectedCount()"><span>#${p.number} ${p.name}</span>`;
+                container.appendChild(item);
+            });
+            updateSelectedCount();
+        }
 
-            let reader = new FileReader();
-            reader.onload = function(e) {
+        function updateSelectedCount() {
+            let checkboxes = document.querySelectorAll('.roster-chk:checked');
+            let count = checkboxes.length;
+            let counterEl = document.getElementById('roster-count-label');
+            counterEl.innerText = `Atletas selecionados: ${count}/14`;
+            if (count > 14) {
+                counterEl.style.color = '#ff5555';
+            } else {
+                counterEl.style.color = '#00ffcc';
+            }
+        }
+
+        function toggleAllRoster(status) {
+            let checkboxes = document.querySelectorAll('.roster-chk');
+            checkboxes.forEach((chk, i) => {
+                if (status && i < 14) {
+                    chk.checked = true;
+                } else {
+                    chk.checked = false;
+                }
+            });
+            updateSelectedCount();
+        }
+
+        function saveAndProceedToStep4() {
+            let checkboxes = document.querySelectorAll('.roster-chk');
+            let convocados = [];
+
+            checkboxes.forEach(chk => {
+                let idx = parseInt(chk.value);
+                if (currentSessionData.roster[idx]) {
+                    currentSessionData.roster[idx].selected = chk.checked;
+                    if (chk.checked) {
+                        convocados.push(currentSessionData.roster[idx]);
+                    }
+                }
+            });
+
+            if (convocados.length === 0) {
+                alert("Atenção: Tem de selecionar pelo menos um atleta para a convocatória.");
+                return;
+            }
+
+            if (convocados.length > 14) {
+                alert(`Atenção: Selecionou ${convocados.length} atletas. O limite máximo permitido para a convocatória são 14 atletas!`);
+                return;
+            }
+
+            localStorage.setItem('futsal_session_data', JSON.stringify(currentSessionData));
+            localStorage.setItem('matchRoster', JSON.stringify(convocados));
+            localStorage.setItem('atletasConvocados', JSON.stringify(convocados));
+            
+            goToStep(4);
+        }
+
+        function openTacticalModule() {
+            saveStateToStorage();
+            window.location.href = 'analise_tatica.html';
+        }
+
+        function openGRModule() {
+            saveStateToStorage();
+            window.location.href = 'analise_gr.html';
+        }
+
+        function openGeneralModule() {
+            saveStateToStorage();
+            window.location.href = 'analise_geral.html';
+        }
+
+        function saveStateToStorage() {
+            let checkboxes = document.querySelectorAll('.roster-chk');
+            let convocados = [];
+            checkboxes.forEach(chk => {
+                let idx = parseInt(chk.value);
+                if (currentSessionData.roster[idx]) {
+                    currentSessionData.roster[idx].selected = chk.checked;
+                    if (chk.checked) convocados.push(currentSessionData.roster[idx]);
+                }
+            });
+            localStorage.setItem('futsal_session_data', JSON.stringify(currentSessionData));
+            localStorage.setItem('matchRoster', JSON.stringify(convocados));
+            localStorage.setItem('atletasConvocados', JSON.stringify(convocados));
+        }
+
+        window.onload = function() {
+            let saved = localStorage.getItem('futsal_session_data');
+            if (saved) {
                 try {
-                    let data = JSON.parse(e.target.result);
-                    loadedConfigData = data;
-
-                    if (data.awayName) document.getElementById('setup-away').value = data.awayName;
-                    if (data.location) document.getElementById('setup-location').value = data.location;
-                    if (data.escalao) document.getElementById('setup-escalao').value = data.escalao;
-                    if (data.date) document.getElementById('setup-date').value = data.date;
-                    if (data.time) document.getElementById('setup-time').value = data.time;
-
-                    alert("Configuração e plantel carregados com sucesso! Podes rever os dados e avançar.");
-                } catch (err) {
-                    alert("Erro ao ler o ficheiro JSON de configuração.");
-                    console.error(err);
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function confirmGameRoster() {
-            let selectedPlayers = [];
-            for (let i = 0; i < 20; i++) {
-                let chk = document.getElementById(`check-p-${i}`);
-                if (chk && chk.checked) {
-                    let num = parseInt(document.getElementById(`num-p-${i}`).value) || (i + 1);
-                    let name = document.getElementById(`name-p-${i}`).value.trim() || `Atleta ${i + 1}`;
-                    selectedPlayers.push({
-                        number: num,
-                        name: name,
-                        isOnField: false,
-                        secondsPlayedP1: 0,
-                        secondsRestedP1: 0,
-                        secondsPlayedP2: 0,
-                        secondsRestedP2: 0,
-                        substitutionsCount: 0,
-                        yellowCards: 0,
-                        redCards: 0
-                    });
-                }
+                    currentSessionData = JSON.parse(saved);
+                    
+                    if (currentSessionData.username) document.getElementById('login-user').value = currentSessionData.username;
+                    if (currentSessionData.homeName) document.getElementById('cfg-home-name').value = currentSessionData.homeName;
+                    if (currentSessionData.awayName) document.getElementById('cfg-away-name').value = currentSessionData.awayName;
+                } catch(e) {}
             }
-
-            if (selectedPlayers.length === 0) {
-                alert("Tens de selecionar pelo menos um atleta.");
-                return;
+            loadAvailableEscaloes();
+            if (typeof defaultUser !== 'undefined' && defaultUser) {
+                if (document.getElementById('login-user')) document.getElementById('login-user').value = defaultUser.username || '';
+                if (document.getElementById('login-pass')) document.getElementById('login-pass').value = defaultUser.password || '';
             }
-
-            if (selectedPlayers.length > 14) {
-                alert("O limite máximo permitido são 14 atletas selecionados!");
-                return;
-            }
-
-            players = selectedPlayers;
-            document.getElementById('roster-select-modal').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-
-            if (typeof window.initAppAfterLogin === 'function') {
-                window.initAppAfterLogin();
-            }
-        }
+        };
     </script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="app.js"></script>
 </body>
 </html>

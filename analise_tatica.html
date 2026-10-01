@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Tática Avançada - Futsal PRO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tactical-layout {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            padding: 10px;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+        .tactical-sidebar {
+            width: 320px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            gap: 8px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .tactical-main {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            height: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .futsal-pitch-4020 {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            background-color: #b87d4b;
+            background-image: 
+                linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 40px 100%, 100% 40px;
+            border: 4px solid #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.6);
+        }
+
+        .pitch-zone-overlay {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        #zone-overlay-left { left: 0; width: 25%; }
+        #zone-overlay-mid-left { left: 25%; width: 25%; }
+        #zone-overlay-mid-right { left: 50%; width: 25%; }
+        #zone-overlay-right { left: 75%; width: 25%; }
+
+        .pitch-center-line {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%; width: 3px;
+            background: rgba(255,255,255,0.9);
+            transform: translateX(-50%);
+            pointer-events: none; z-index: 2;
+        }
+        .pitch-center-circle {
+            position: absolute;
+            top: 50%; left: 50%; width: 18%; aspect-ratio: 1;
+            border: 3px solid rgba(255,255,255,0.9);
+            border-radius: 50%; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 2;
+        }
+        .pitch-goal-area-left {
+            position: absolute;
+            top: 20%; left: 0; width: 12%; height: 60%;
+            border: 3px solid rgba(255,255,255,0.9);
+            border-left: none;
+            border-top-right-radius: 90px; border-bottom-right-radius: 90px;
+            pointer-events: none; z-index: 2;
+        }
+        .pitch-goal-area-right {
+            position: absolute;
+            top: 20%; right: 0; width: 12%; height: 60%;
+            border: 3px solid rgba(255,255,255,0.9);
+            border-right: none;
+            border-top-left-radius: 90px; border-bottom-left-radius: 90px;
+            pointer-events: none; z-index: 2;
+        }
+        
+        .pitch-team-watermark {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            font-size: 2.8rem; font-weight: 900; color: rgba(255, 255, 255, 0.14);
+            pointer-events: none; letter-spacing: 2px; white-space: nowrap; z-index: 3; width: 50%; text-align: center;
+        }
+        #watermark-left { left: 0; }
+        #watermark-right { left: 50%; }
+
+        .tactical-direction-banner {
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #00ffcc; color: #00ffcc;
+            padding: 10px 16px; border-radius: 8px;
+            font-size: 1.05rem; font-weight: 900; text-align: center;
+            box-shadow: 0 0 15px rgba(0,255,204,0.4); margin-bottom: 6px; letter-spacing: 1px;
+        }
+
+        .tactical-marker {
+            position: absolute; width: 34px; height: 34px; border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 12px rgba(0,0,0,0.9), inset 0 0 6px rgba(255,255,255,0.7);
+            border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; font-weight: 900; color: #000; z-index: 6;
+        }
+
+        .tactical-modal-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 8px; margin: 8px 0; max-height: 280px; overflow-y: auto;
+        }
+        .tactical-action-btn {
+            background: #252525; border: 1px solid #444; color: #fff;
+            padding: 12px; border-radius: 6px; font-size: 0.85rem;
+            cursor: pointer; text-align: center; font-weight: bold; transition: all 0.15s;
+        }
+        .tactical-action-btn:hover { background: #00ffcc; color: #000; border-color: #00ffcc; }
+        
+        .action-positive { border-color: #00ffcc; color: #00ffcc; }
+        .action-positive:hover { background: #00ffcc; color: #000; }
+        
+        .action-negative { border-color: #ff5555; color: #ff5555; }
+        .action-negative:hover { background: #ff5555; color: #fff; }
+
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-content { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; color: #fff; box-sizing: border-box; }
+        .modal-close-btn { width: 100%; margin-top: 10px; background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .modal-close-btn:hover { background: #444; }
+        .period-btn { background: #222; border: 1px solid #444; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .period-btn.active { background: #00ffcc; color: #000; border-color: #00ffcc; }
+        .btn-clock-adj { background: #222; color: #fff; border: 1px solid #444; padding: 2px 6px; cursor: pointer; border-radius: 3px; }
+        .btn-start-pro { background: #28a745; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; padding: 8px; }
+        .btn-pause-pro { background: #dc3545; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; padding: 8px; }
+        .btn-corr { background: #222; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .log-entry { background: #1a1a1a; padding: 5px 8px; border-radius: 4px; border-left: 3px solid #00ffcc; font-size: 0.75rem; line-height: 1.3; }
+
+        @media (max-width: 900px) {
+            .tactical-layout { flex-direction: column; height: auto; overflow-y: auto; }
+            .tactical-sidebar { width: 100%; height: auto; }
+            .tactical-main { height: 75vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tactical-layout" id="tactical-app">
+        
+        <div class="tactical-sidebar">
+            <div style="border-bottom: 1px solid #333; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #00ffcc; font-size: 0.95rem;">Análise Tática PRO</h3>
+                <button class="btn-corr" onclick="window.location.href='index.html'">Voltar Principal</button>
+            </div>
+
+            <div style="background: #141414; border: 1px solid #333; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <div>
+                    <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 2px;">Sentido de Ataque (1ª Parte):</label>
+                    <select id="tac-attack-direction-select" onchange="changeAttackDirectionSetting()" style="width: 100%; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="left-to-right">Esquerda para Direita ➡️</option>
+                        <option value="right-to-left">Direita para Esquerda ⬅️</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.75rem; color: #00ffcc; display: block; margin-bottom: 2px; font-weight: bold;">Filtro de Análise Detalhada:</label>
+                    <select id="tac-filter-actions-select" onchange="changeFilterActionsSetting()" style="width: 100%; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="all">⚡ Todas as Ações</option>
+                        <option value="negative-focus">🔴 Foco em Ações Negativas</option>
+                        <option value="positive-focus">🟢 Foco em Ações Positivas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Cronómetro & Placar Dinâmico de Golos -->
+            <div class="timer-section" style="padding: 8px; background: #141414; border-radius: 6px; text-align: center;">
+                <div style="display: flex; justify-content: space-around; align-items: center; background: #1e1e1e; padding: 6px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #333;">
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.65rem; color: #00ffcc; display: block;" id="tac-lbl-home">DINAMO</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <button class="btn-corr" onclick="modifyTacticalGoals('home', -1)">-</button>
+                            <span id="tac-score-home" style="font-size: 1.2rem; font-weight: bold; color: #fff;">0</span>
+                            <button class="btn-corr" onclick="modifyTacticalGoals('home', 1)">+</button>
+                        </div>
+                    </div>
+                    <span style="font-size: 1.2rem; color: #555; font-weight: bold;">VS</span>
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.65rem; color: #ff5555; display: block;" id="tac-lbl-away">VISITANTE</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <button class="btn-corr" onclick="modifyTacticalGoals('away', -1)">-</button>
+                            <span id="tac-score-away" style="font-size: 1.2rem; font-weight: bold; color: #fff;">0</span>
+                            <button class="btn-corr" onclick="modifyTacticalGoals('away', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <button class="btn-clock-adj" onclick="adjustTacticalSeconds(-1)" title="Menos 1 Segundo">-1s</button>
+                    <h2 id="tac-timer" style="font-size: 1.8rem; margin: 0; color: #00ffcc; font-family: monospace;">20:00</h2>
+                    <button class="btn-clock-adj" onclick="adjustTacticalSeconds(1)" title="Mais 1 Segundo">+1s</button>
+                </div>
+
+                <div class="timer-config-row" style="margin: 4px 0;">
+                    <label for="tac-timer-duration" style="font-size: 0.75rem;">Min:</label>
+                    <input type="number" id="tac-timer-duration" value="20" min="1" max="60" onchange="changeTacticalTimerDuration()" style="width:35px; text-align:center; background:#222; color:#fff; border:1px solid #444;">
+                </div>
+
+                <div class="period-selector" style="margin-top: 4px; display: flex; justify-content: center; gap: 6px;">
+                    <button id="tac-btn-p1" class="period-btn active" onclick="switchTacticalPeriod(1)">1º Período</button>
+                    <button id="tac-btn-p2" class="period-btn" onclick="switchTacticalPeriod(2)">2º Período</button>
+                </div>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <button class="btn-start-pro" onclick="startTacticalTimer()">Iniciar</button>
+                    <button class="btn-pause-pro" onclick="pauseTacticalTimer()">Pausar</button>
+                </div>
+            </div>
+
+            <button class="btn-corr" style="background: #4a2222; border-color: #ff5555; color: #ff5555; padding: 6px; font-weight: bold; width: 100%; cursor: pointer;" onclick="undoLastTacticalAction()">↩️ Desfazer Última Ação</button>
+
+            <div style="flex: 1; display: flex; flex-direction: column; background: #111; border: 1px solid #333; border-radius: 6px; padding: 6px; overflow: hidden; min-height: 140px;">
+                <h4 style="margin: 0 0 4px 0; font-size: 0.75rem; color: #aaa; text-align: center;">Registo Comportamental & Finalização</h4>
+                <div id="tac-action-log" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
+            </div>
+
+            <button onclick="exportSavedTacticalJSON()" style="background: #112520; border-color: #00ffcc; color: #00ffcc; padding: 8px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 6px; border: 1px solid #00ffcc;">💾 Guardar Sessão (JSON)</button>
+
+            <div style="display: flex; gap: 6px;">
+                <button style="flex: 1; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; cursor: pointer;" onclick="exportTacticalExcel()">Excel</button>
+                <button style="flex: 1; padding: 6px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; cursor: pointer;" onclick="exportTacticalPDF()">PDF</button>
+            </div>
+
+            <footer style="text-align: center; font-size: 0.7rem; color: #666; border-top: 1px solid #222; padding-top: 4px;">
+                andrepe @ 2026
+            </footer>
+        </div>
+
+        <div class="tactical-main">
+            <div class="tactical-direction-banner" id="tactical-arrow-top">
+                <span>➡️ SENTIDO DE ATAQUE</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 0.8rem; color: #00ffcc;" id="tac-match-info">Dinamo vs Visitante (Pavilhão 40x20)</h3>
+                <span style="font-size: 0.7rem; color: #aaa;">💡 <b>Duplo Clique (2x)</b> no campo para Remate/Golo | Clique simples para Ações Táticas.</span>
+            </div>
+
+            <!-- CAMPO TÁTICO: DUPLO CLIQUE ABRE REMATE/GOLO -->
+            <div class="futsal-pitch-4020" id="tactical-pitch" ondblclick="handlePitchDoubleTap(event)" onclick="handleTacticalPitchClick(event)">
+                <div class="pitch-zone-overlay" id="zone-overlay-left"></div>
+                <div class="pitch-zone-overlay" id="zone-overlay-mid-left"></div>
+                <div class="pitch-zone-overlay" id="zone-overlay-mid-right"></div>
+                <div class="pitch-zone-overlay" id="zone-overlay-right"></div>
+
+                <div class="pitch-center-line"></div>
+                <div class="pitch-center-circle"></div>
+                <div class="pitch-goal-area-left"></div>
+                <div class="pitch-goal-area-right"></div>
+                
+                <div class="pitch-team-watermark" id="watermark-left">DINAMO</div>
+                <div class="pitch-team-watermark" id="watermark-right">VISITANTE</div>
+            </div>
+
+            <div class="tactical-direction-banner" id="tactical-arrow-bottom" style="margin-top: 6px; margin-bottom: 0;">
+                <span>➡️ SENTIDO DE ATAQUE</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE FILTRO DE ATLETAS -->
+    <div id="tac-filter-players-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 450px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">Filtro de Análise Detalhada</h3>
+            <p style="font-size: 0.8rem; color: #aaa; text-align: center; margin-bottom: 12px;">Selecione os atletas que pretende focar nesta análise tática:</p>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.75rem; color: #00ffcc;" id="tac-filter-count">Atletas ativos: 0</span>
+                <div>
+                    <button type="button" onclick="toggleFilterModalPlayers(true)" style="background:#222; color:#00ffcc; border:1px solid #00ffcc; font-size:0.7rem; padding:3px 8px; cursor:pointer; border-radius:4px;">Todos</button>
+                    <button type="button" onclick="toggleFilterModalPlayers(false)" style="background:#222; color:#ff5555; border:1px solid #ff5555; font-size:0.7rem; padding:3px 8px; cursor:pointer; border-radius:4px;">Nenhum</button>
+                </div>
+            </div>
+
+            <div id="tac-filter-checklist" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 220px; overflow-y: auto; padding: 6px; background: #121212; border: 1px solid #333; border-radius: 6px; margin-bottom: 15px;"></div>
+
+            <button class="btn-action" style="width: 100%; background: #00ffcc; color: #000; padding: 10px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;" onclick="confirmTacticalPlayerFilter()">Iniciar Análise com Selecionados</button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: ESCOLHER REMATE OU GOLO (DISPARADO POR DUPLO CLIQUE) -->
+    <div id="tac-shot-goal-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 380px; text-align: center;">
+            <h3 style="color: #ffcc00; margin-top: 0;">⚡ Finalização</h3>
+            <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 15px;">Selecione a ação pretendida:</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="tactical-action-btn" style="flex: 1; padding: 16px; border-color: #ffcc00; color: #ffcc00;" onclick="selectActionType('REMATE', '#ffcc00')">🎯 REMATE</button>
+                <button class="tactical-action-btn" style="flex: 1; padding: 16px; border-color: #00ffcc; color: #00ffcc; background: #0b261e;" onclick="selectActionType('GOLO', '#00ffcc')">⚽ GOLO</button>
+            </div>
+            <button class="modal-close-btn" style="margin-top: 15px;" onclick="document.getElementById('tac-shot-goal-modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ESCOLHER A EQUIPA (CASA VS VISITANTE) -->
+    <div id="tac-team-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 380px; text-align: center;">
+            <h3 style="color: #00ffcc; margin-top: 0;" id="tac-team-modal-title">Qual a Equipa?</h3>
+            <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 15px;">Selecione a equipa responsável:</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="tactical-action-btn action-positive" style="flex: 1; padding: 14px;" onclick="selectTeamForAction('home')">🏠 <span id="btn-name-home">Dinamo</span></button>
+                <button class="tactical-action-btn action-negative" style="flex: 1; padding: 14px;" onclick="selectTeamForAction('away')">✈️ <span id="btn-name-away">Adversário</span></button>
+            </div>
+            <button class="modal-close-btn" style="margin-top: 15px;" onclick="document.getElementById('tac-team-modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: SELECIONAR ATLETA (APENAS PARA EQUIPA DA CASA) -->
+    <div id="tac-player-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 420px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;">Selecione o Atleta em Foco</h3>
+            <div id="tac-players-grid" class="tactical-modal-grid"></div>
+            <button class="modal-close-btn" onclick="closeTacModals()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL 4: AÇÕES TÁTICAS COMPORTAMENTAIS (CLIQUE SIMPLES) -->
+    <div id="tac-action-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content" style="width: 520px;">
+            <h3 style="color: #00ffcc; margin-top: 0; text-align: center;" id="tac-selected-player-title">Selecione a Ação Tática</h3>
+            <p style="font-size: 0.75rem; color: #ffcc00; text-align: center; margin-bottom: 8px;" id="tac-auto-zone-subtitle"></p>
+            <div id="tac-action-container" style="display: flex; gap: 10px; margin-top: 8px;"></div>
+            <button class="modal-close-btn" style="margin-top: 10px;" onclick="closeTacModals()">Voltar / Cancelar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        let tacCurrentPeriod = 1;
+        let tacTotalSeconds = 1200;
+        let tacTimerInterval = null;
+        let tacIsRunning = false;
+        let tacticalAttackDirection = 'left-to-right';
+        let tacticalLogs = { 1: [], 2: [] };
+        let periodPitchHTML = { 1: '', 2: '' };
+        let tacticalPendingX = 0;
+        let tacticalPendingY = 0;
+        
+        let pendingActionName = ''; // 'REMATE' ou 'GOLO'
+        let selectedTacticalTeam = 'home'; // 'home' ou 'away'
+        let selectedTacticalPlayer = null;
+        let calculatedZoneName = '';
+        let calculatedZoneColor = '#28a745';
+        
+        let tacticalGoalsHome = 0;
+        let tacticalGoalsAway = 0;
+
+        let allConvocados = [];
+        let tacticalPlayers = [];
+        let sessionData = {
+            homeName: "GRC Dínamo Sanjoanense",
+            awayName: "Adversário Futsal",
+            attackDirection: "left-to-right",
+            filterActions: "all",
+            roster: []
+        };
+
+        window.onload = function() {
+            let saved = localStorage.getItem('futsal_session_data');
+            if (saved) {
+                try {
+                    sessionData = JSON.parse(saved);
+                    tacticalAttackDirection = sessionData.attackDirection || 'left-to-right';
+                    
+                    if (sessionData.filterActions) document.getElementById('tac-filter-actions-select').value = sessionData.filterActions;
+                    if (sessionData.attackDirection) document.getElementById('tac-attack-direction-select').value = sessionData.attackDirection;
+                    
+                    let listaAtletas = sessionData.convocados || (sessionData.roster ? sessionData.roster.filter(p => p.selected === true) : []);
+                    if (listaAtletas.length === 0 && sessionData.roster) listaAtletas = sessionData.roster;
+                    allConvocados = listaAtletas;
+
+                    if (sessionData.tacticalLogs) tacticalLogs = sessionData.tacticalLogs;
+                    if (sessionData.tacticalGoalsHome !== undefined) tacticalGoalsHome = sessionData.tacticalGoalsHome;
+                    if (sessionData.tacticalGoalsAway !== undefined) tacticalGoalsAway = sessionData.tacticalGoalsAway;
+                } catch(e) { console.error(e); }
+            }
+
+            let home = sessionData.homeName || 'Dinamo';
+            let away = sessionData.awayName || 'Visitante';
+            document.getElementById('tac-match-info').innerText = `${home} vs ${away} (Pavilhão 40x20)`;
+            document.getElementById('tac-lbl-home').innerText = home.toUpperCase();
+            document.getElementById('tac-lbl-away').innerText = away.toUpperCase();
+            document.getElementById('btn-name-home').innerText = home;
+            document.getElementById('btn-name-away').innerText = away;
+
+            document.getElementById('tac-score-home').innerText = tacticalGoalsHome;
+            document.getElementById('tac-score-away').innerText = tacticalGoalsAway;
+
+            updateTacticalDirectionUI();
+            updateWatermarksAndOverlays();
+            updateTacTimerDisplay();
+            redrawLoadedLogs();
+
+            openTacticalFilterModal();
+        };
+
+        window.addEventListener('beforeunload', function() {
+            syncLogsToLocalStorage();
+        });
+
+        function changeAttackDirectionSetting() {
+            tacticalAttackDirection = document.getElementById('tac-attack-direction-select').value;
+            sessionData.attackDirection = tacticalAttackDirection;
+            syncLogsToLocalStorage();
+            updateTacticalDirectionUI();
+            updateWatermarksAndOverlays();
+        }
+
+        function changeFilterActionsSetting() {
+            sessionData.filterActions = document.getElementById('tac-filter-actions-select').value;
+            syncLogsToLocalStorage();
+        }
+
+        function updateTacTimerDisplay() {
+            let min = Math.floor(tacTotalSeconds / 60);
+            let sec = tacTotalSeconds % 60;
+            document.getElementById('tac-timer').innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function openTacticalFilterModal() {
+            let container = document.getElementById('tac-filter-checklist');
+            container.innerHTML = '';
+
+            if (allConvocados.length === 0) {
+                container.innerHTML = `<span style="color:#ff5555; grid-column:span 2; text-align:center;">Sem atletas convocados. Volte ao painel inicial.</span>`;
+                return;
+            }
+
+            allConvocados.forEach((p, idx) => {
+                let item = document.createElement('label');
+                item.className = 'player-checkbox-item';
+                item.style.cssText = "display: flex; align-items: center; gap: 8px; background: #222; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; color: #fff; border: 1px solid #444; cursor: pointer;";
+                item.innerHTML = `
+                    <input type="checkbox" class="tac-filter-chk" value="${idx}" checked onchange="updateFilterModalCount()">
+                    <span>#${p.number || p.dorsal || ''} ${p.name || p.nome}</span>
+                `;
+                container.appendChild(item);
+            });
+            updateFilterModalCount();
+            document.getElementById('tac-filter-players-modal').style.display = 'flex';
+        }
+
+        function updateFilterModalCount() {
+            let checkedCount = document.querySelectorAll('.tac-filter-chk:checked').length;
+            document.getElementById('tac-filter-count').innerText = `Atletas ativos: ${checkedCount}`;
+        }
+
+        function toggleFilterModalPlayers(status) {
+            document.querySelectorAll('.tac-filter-chk').forEach(chk => {
+                chk.checked = status;
+            });
+            updateFilterModalCount();
+        }
+
+        function confirmTacticalPlayerFilter() {
+            let checkboxes = document.querySelectorAll('.tac-filter-chk');
+            tacticalPlayers = [];
+
+            checkboxes.forEach(chk => {
+                let idx = parseInt(chk.value);
+                if (chk.checked && allConvocados[idx]) {
+                    tacticalPlayers.push(allConvocados[idx]);
+                }
+            });
+
+            if (tacticalPlayers.length === 0) {
+                alert("Tem de selecionar pelo menos um atleta para seguir com a análise detalhada.");
+                return;
+            }
+
+            document.getElementById('tac-filter-players-modal').style.display = 'none';
+        }
+
+        function updateWatermarksAndOverlays() {
+            let home = sessionData.homeName || 'Dinamo';
+            let away = sessionData.awayName || 'Visitante';
+            let leftWatermark = document.getElementById('watermark-left');
+            let rightWatermark = document.getElementById('watermark-right');
+
+            let isLeftToRight = (tacticalAttackDirection === 'left-to-right');
+            let isFirstPeriod = (tacCurrentPeriod === 1);
+            let currentAtkLeftToRight = isFirstPeriod ? isLeftToRight : !isLeftToRight;
+
+            if (currentAtkLeftToRight) {
+                leftWatermark.innerText = home.toUpperCase();
+                rightWatermark.innerText = away.toUpperCase();
+                
+                document.getElementById('zone-overlay-left').style.background = 'rgba(220, 53, 69, 0.16)';
+                document.getElementById('zone-overlay-mid-left').style.background = 'rgba(255, 193, 7, 0.14)';
+                document.getElementById('zone-overlay-mid-right').style.background = 'rgba(40, 167, 69, 0.12)';
+                document.getElementById('zone-overlay-right').style.background = 'rgba(40, 167, 69, 0.16)';
+            } else {
+                leftWatermark.innerText = away.toUpperCase();
+                rightWatermark.innerText = home.toUpperCase();
+
+                document.getElementById('zone-overlay-left').style.background = 'rgba(40, 167, 69, 0.16)';
+                document.getElementById('zone-overlay-mid-left').style.background = 'rgba(40, 167, 69, 0.12)';
+                document.getElementById('zone-overlay-mid-right').style.background = 'rgba(255, 193, 7, 0.14)';
+                document.getElementById('zone-overlay-right').style.background = 'rgba(220, 53, 69, 0.16)';
+            }
+        }
+
+        function updateTacticalDirectionUI() {
+            let bannerText = "";
+            let home = sessionData.homeName || 'Dinamo';
+
+            if (tacCurrentPeriod === 1) {
+                if (tacticalAttackDirection === 'left-to-right') {
+                    bannerText = `<span>1ª PARTE ➔ ATAQUE DA EQUIPA ${home.toUpperCase()} (ESQUERDA PARA DIREITA ➡️)</span>`;
+                } else {
+                    bannerText = `<span>1ª PARTE ➔ ATAQUE DA EQUIPA ${home.toUpperCase()} (DIREITA PARA ESQUERDA ⬅️)</span>`;
+                }
+            } else {
+                if (tacticalAttackDirection === 'left-to-right') {
+                    bannerText = `<span>2ª PARTE (INVERTIDO) ➔ ATAQUE DA EQUIPA ${home.toUpperCase()} (DIREITA PARA ESQUERDA ⬅️)</span>`;
+                } else {
+                    bannerText = `<span>2ª PARTE (INVERTIDO) ➔ ATAQUE DA EQUIPA ${home.toUpperCase()} (ESQUERDA PARA DIREITA ➡️)</span>`;
+                }
+            }
+            document.getElementById('tactical-arrow-top').innerHTML = bannerText;
+            document.getElementById('tactical-arrow-bottom').innerHTML = bannerText;
+        }
+
+        function changeTacticalTimerDuration() {
+            if (tacIsRunning) return;
+            let minInput = parseInt(document.getElementById('tac-timer-duration').value) || 20;
+            tacTotalSeconds = minInput * 60;
+            updateTacTimerDisplay();
+        }
+
+        function adjustTacticalSeconds(amount) {
+            if (tacIsRunning) return;
+            tacTotalSeconds += amount;
+            if (tacTotalSeconds < 0) tacTotalSeconds = 0;
+            updateTacTimerDisplay();
+        }
+
+        function saveCurrentPeriodPitchState() {
+            let pitchEl = document.getElementById('tactical-pitch');
+            let markersHTML = '';
+            pitchEl.querySelectorAll('.tactical-marker').forEach(m => {
+                markersHTML += m.outerHTML;
+            });
+            periodPitchHTML[tacCurrentPeriod] = markersHTML;
+        }
+
+        function switchTacticalPeriod(period) {
+            pauseTacticalTimer();
+            saveCurrentPeriodPitchState();
+
+            if (period === 2 && tacCurrentPeriod === 1) {
+                exportSavedTacticalJSONAuto("Fim_1P");
+            }
+
+            tacCurrentPeriod = period;
+            let minInput = parseInt(document.getElementById('tac-timer-duration').value) || 20;
+            tacTotalSeconds = minInput * 60;
+
+            document.getElementById('tac-btn-p1').className = period === 1 ? 'period-btn active' : 'period-btn';
+            document.getElementById('tac-btn-p2').className = period === 2 ? 'period-btn active' : 'period-btn';
+            
+            updateTacticalDirectionUI();
+            updateTacTimerDisplay();
+            updateWatermarksAndOverlays();
+
+            let pitchEl = document.getElementById('tactical-pitch');
+            pitchEl.querySelectorAll('.tactical-marker').forEach(m => m.remove());
+            if (periodPitchHTML[period]) {
+                pitchEl.insertAdjacentHTML('beforeend', periodPitchHTML[period]);
+            }
+
+            logTacticalAction('SISTEMA', `Início do ${period}º Período Tático`, null, null, null, null, '#888');
+        }
+
+        function startTacticalTimer() {
+            if (!tacIsRunning && tacTotalSeconds > 0) {
+                tacIsRunning = true;
+                tacTimerInterval = setInterval(() => {
+                    if (tacTotalSeconds > 0) {
+                        tacTotalSeconds--;
+                        updateTacTimerDisplay();
+                    } else {
+                        pauseTacticalTimer();
+                        alert(`Fim do ${tacCurrentPeriod}º Período!`);
+                        if (tacCurrentPeriod === 1) {
+                            switchTacticalPeriod(2);
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        function pauseTacticalTimer() {
+            tacIsRunning = false;
+            clearInterval(tacTimerInterval);
+        }
+
+        // --- 1. DUPLO CLIQUE NO CAMPO: ABRE O MODAL DE REMATE OU GOLO ---
+        function handlePitchDoubleTap(event) {
+            if (event.target.classList.contains('tactical-marker')) return;
+            const pitch = document.getElementById('tactical-pitch');
+            const rect = pitch.getBoundingClientRect();
+            tacticalPendingX = ((event.clientX - rect.left) / rect.width) * 100;
+            tacticalPendingY = ((event.clientY - rect.top) / rect.height) * 100;
+
+            computeAutomaticZone(tacticalPendingX);
+            
+            // Abre o modal de Remate/Golo diretamente
+            document.getElementById('tac-shot-goal-modal').style.display = 'flex';
+        }
+
+        function selectActionType(actionName, colorHex) {
+            document.getElementById('tac-shot-goal-modal').style.display = 'none';
+            pendingActionName = actionName;
+            
+            // Passo seguinte: Pergunta qual é a equipa
+            document.getElementById('tac-team-modal-title').innerText = `Registar ${actionName}: Qual a Equipa?`;
+            document.getElementById('tac-team-modal').style.display = 'flex';
+        }
+
+        function selectTeamForAction(teamKey) {
+            document.getElementById('tac-team-modal').style.display = 'none';
+            selectedTacticalTeam = teamKey;
+
+            if (teamKey === 'home') {
+                // Se for Casa -> Abre a lista de atletas para associar quem marcou/rematou
+                showTacPlayerModal();
+            } else {
+                // Se for Visitante -> Regista automaticamente sem pedir atleta
+                let teamName = sessionData.awayName || 'Adversário';
+                let color = pendingActionName === 'GOLO' ? '#ff5555' : '#ffcc00';
+                
+                if (pendingActionName === 'GOLO') {
+                    tacticalGoalsAway++;
+                    document.getElementById('tac-score-away').innerText = tacticalGoalsAway;
+                }
+
+                let pitch = document.getElementById('tactical-pitch');
+                addTacticalMarker(pitch, tacticalPendingX, tacticalPendingY, pendingActionName, color, 'ADV');
+                logTacticalAction(teamName.toUpperCase(), `${pendingActionName} (Adversário)`, null, calculatedZoneName, tacticalPendingX.toFixed(1), tacticalPendingY.toFixed(1), color);
+            }
+        }
+
+        // --- 2. CLIQUE SIMPLES NO CAMPO: ABRE AÇÕES TÁTICAS COMPORTAMENTAIS ---
+        function handleTacticalPitchClick(event) {
+            if (event.target.classList.contains('tactical-marker')) return;
+            // Ignora se for tratado como duplo clique
+        }
+
+        // Para distinguir clique simples de duplo clique no campo tático de forma fluida
+        let clickTimeout = null;
+        document.addEventListener("DOMContentLoaded", () => {
+            let pitchEl = document.getElementById('tactical-pitch');
+            if (pitchEl) {
+                pitchEl.addEventListener('click', function(event) {
+                    if (event.target.classList.contains('tactical-marker')) return;
+                    const rect = pitchEl.getBoundingClientRect();
+                    tacticalPendingX = ((event.clientX - rect.left) / rect.width) * 100;
+                    tacticalPendingY = ((event.clientY - rect.top) / rect.height) * 100;
+                    computeAutomaticZone(tacticalPendingX);
+
+                    clearTimeout(clickTimeout);
+                    clickTimeout = setTimeout(() => {
+                        // Clique simples abre ações comportamentais (após certificar que não houve duplo clique)
+                        showTacPlayerModalForBehavior();
+                    }, 250);
+                });
+
+                pitchEl.addEventListener('dblclick', function(event) {
+                    clearTimeout(clickTimeout); // Cancela o clique simples
+                    handlePitchDoubleTap(event);
+                });
+            }
+        });
+
+        function showTacPlayerModalForBehavior() {
+            selectedTacticalTeam = 'home';
+            pendingActionName = '';
+            showTacPlayerModal();
+        }
+
+        function computeAutomaticZone(xPercent) {
+            let isLeftToRight = (tacticalAttackDirection === 'left-to-right');
+            let isFirstPeriod = (tacCurrentPeriod === 1);
+            let currentAtkLeftToRight = isFirstPeriod ? isLeftToRight : !isLeftToRight;
+            
+            if (currentAtkLeftToRight) {
+                if (xPercent <= 25) { calculatedZoneName = 'Zona Vermelha'; calculatedZoneColor = '#dc3545'; }
+                else if (xPercent <= 50) { calculatedZoneName = 'Zona Amarela'; calculatedZoneColor = '#ffc107'; }
+                else { calculatedZoneName = 'Zona Verde'; calculatedZoneColor = '#28a745'; }
+            } else {
+                if (xPercent >= 75) { calculatedZoneName = 'Zona Vermelha'; calculatedZoneColor = '#dc3545'; }
+                else if (xPercent >= 50) { calculatedZoneName = 'Zona Amarela'; calculatedZoneColor = '#ffc107'; }
+                else { calculatedZoneName = 'Zona Verde'; calculatedZoneColor = '#28a745'; }
+            }
+        }
+
+        function showTacPlayerModal() {
+            let grid = document.getElementById('tac-players-grid');
+            grid.innerHTML = '';
+            
+            if (tacticalPlayers.length === 0) {
+                grid.innerHTML = `<span style="color:#ff5555; grid-column:span 2; text-align:center;">Nenhum atleta ativo selecionado para análise.</span>`;
+            }
+
+            tacticalPlayers.forEach(p => {
+                let pNum = p.number || p.dorsal || '';
+                let pName = p.name || p.nome || '';
+                let btn = document.createElement('button');
+                btn.className = 'tactical-action-btn';
+                btn.style.padding = "14px";
+                btn.style.fontSize = "0.95rem";
+                btn.style.fontWeight = "bold";
+                btn.innerText = `#${pNum} - ${pName}`;
+                btn.onclick = function() {
+                    selectedTacticalPlayer = p;
+                    document.getElementById('tac-player-modal').style.display = 'none';
+
+                    if (pendingActionName !== '') {
+                        // Se vinha de um Remate ou Golo da Casa
+                        let color = pendingActionName === 'GOLO' ? '#00ffcc' : '#ffcc00';
+                        if (pendingActionName === 'GOLO') {
+                            tacticalGoalsHome++;
+                            document.getElementById('tac-score-home').innerText = tacticalGoalsHome;
+                        }
+                        let pitch = document.getElementById('tactical-pitch');
+                        addTacticalMarker(pitch, tacticalPendingX, tacticalPendingY, pendingActionName, color);
+                        let teamName = sessionData.homeName || 'Dinamo';
+                        logTacticalAction(teamName.toUpperCase(), `${pendingActionName} (#${pNum} ${pName})`, selectedTacticalPlayer, calculatedZoneName, tacticalPendingX.toFixed(1), tacticalPendingY.toFixed(1), color);
+                        pendingActionName = '';
+                    } else {
+                        // Ação comportamental normal
+                        document.getElementById('tac-selected-player-title').innerText = `Ação para #${pNum} (${pName})`;
+                        document.getElementById('tac-auto-zone-subtitle').innerText = `📍 Zona Detetada: ${calculatedZoneName.toUpperCase()}`;
+                        buildActionModalContent();
+                        document.getElementById('tac-action-modal').style.display = 'flex';
+                    }
+                };
+                grid.appendChild(btn);
+            });
+            document.getElementById('tac-player-modal').style.display = 'flex';
+        }
+
+        function buildActionModalContent() {
+            let container = document.getElementById('tac-action-container');
+            container.innerHTML = '';
+
+            let positiveHTML = `
+                <div style="flex: 1; background: #15221c; border: 1px solid #1e4d35; border-radius: 6px; padding: 8px;">
+                    <h4 style="margin: 0 0 6px 0; color: #00ffcc; font-size: 0.8rem; text-align: center;">🟢 AÇÕES POSITIVAS</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="tactical-action-btn action-positive" onclick="confirmTacticalAction('Recuperação de bola', '#00ffcc')">🛡️ Recuperação</button>
+                        <button class="tactical-action-btn action-positive" onclick="confirmTacticalAction('Drible com sucesso', '#00ffcc')">⚡ Drible</button>
+                        <button class="tactical-action-btn action-positive" onclick="confirmTacticalAction('Corte de bola', '#00ffcc')">✂️ Corte de bola</button>
+                    </div>
+                </div>`;
+
+            let negativeHTML = `
+                <div style="flex: 1; background: #221515; border: 1px solid #4d1e1e; border-radius: 6px; padding: 8px;">
+                    <h4 style="margin: 0 0 6px 0; color: #ff5555; font-size: 0.8rem; text-align: center;">🔴 AÇÕES NEGATIVAS</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Passes errados', '#ff5555')">↗️ Passes errados</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Perda de bola', '#ff5555')">❌ Perda de bola</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Pé de apoio errado', '#ff5555')">🦶 Pé apoio errado</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Má receção', '#ff5555')">📥 Má receção</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Má rotação', '#ff5555')">🔄 Má rotação</button>
+                        <button class="tactical-action-btn action-negative" onclick="confirmTacticalAction('Fora de posição', '#ff5555')">📍 Fora de posição</button>
+                    </div>
+                </div>`;
+
+            let mode = sessionData.filterActions || 'all';
+            if (mode === 'positive-focus') container.innerHTML = positiveHTML;
+            else if (mode === 'negative-focus') container.innerHTML = negativeHTML;
+            else container.innerHTML = positiveHTML + negativeHTML;
+        }
+
+        function confirmTacticalAction(actionName, colorHex) {
+            document.getElementById('tac-action-modal').style.display = 'none';
+            let pitch = document.getElementById('tactical-pitch');
+            addTacticalMarker(pitch, tacticalPendingX, tacticalPendingY, actionName, colorHex);
+            let teamName = sessionData.homeName || 'Dinamo';
+            logTacticalAction(teamName.toUpperCase(), actionName, selectedTacticalPlayer, calculatedZoneName, tacticalPendingX.toFixed(1), tacticalPendingY.toFixed(1), colorHex);
+        }
+
+        function modifyTacticalGoals(teamKey, delta) {
+            if (teamKey === 'home') {
+                tacticalGoalsHome += delta;
+                if (tacticalGoalsHome < 0) tacticalGoalsHome = 0;
+                document.getElementById('tac-score-home').innerText = tacticalGoalsHome;
+            } else {
+                tacticalGoalsAway += delta;
+                if (tacticalGoalsAway < 0) tacticalGoalsAway = 0;
+                document.getElementById('tac-score-away').innerText = tacticalGoalsAway;
+            }
+            syncLogsToLocalStorage();
+        }
+
+        function addTacticalMarker(pitchEl, x, y, actionName, colorHex, labelOverride) {
+            let marker = document.createElement('div');
+            marker.className = 'tactical-marker';
+            marker.style.left = `${x}%`;
+            marker.style.top = `${y}%`;
+            marker.style.background = colorHex || '#28a745';
+            marker.innerText = labelOverride || (selectedTacticalPlayer ? (selectedTacticalPlayer.number || selectedTacticalPlayer.dorsal || '•') : '•');
+            pitchEl.appendChild(marker);
+        }
+
+        function undoLastTacticalAction() {
+            if (tacticalLogs[tacCurrentPeriod].length === 0) {
+                alert("Não há registos neste período para desfazer.");
+                return;
+            }
+            let removed = tacticalLogs[tacCurrentPeriod].pop();
+            
+            if (removed && removed.acao.includes('GOLO')) {
+                if (removed.equipa === (sessionData.homeName || 'DINAMO')) {
+                    tacticalGoalsHome--;
+                    if (tacticalGoalsHome < 0) tacticalGoalsHome = 0;
+                    document.getElementById('tac-score-home').innerText = tacticalGoalsHome;
+                } else {
+                    tacticalGoalsAway--;
+                    if (tacticalGoalsAway < 0) tacticalGoalsAway = 0;
+                    document.getElementById('tac-score-away').innerText = tacticalGoalsAway;
+                }
+            }
+
+            let pitchEl = document.getElementById('tactical-pitch');
+            let markers = pitchEl.querySelectorAll('.tactical-marker');
+            if (markers.length > 0) markers[markers.length - 1].remove();
+
+            let logBox = document.getElementById('tac-action-log');
+            if (logBox.firstChild) logBox.firstChild.remove();
+            syncLogsToLocalStorage();
+        }
+
+        function closeTacModals() {
+            document.getElementById('tac-player-modal').style.display = 'none';
+            document.getElementById('tac-action-modal').style.display = 'none';
+            document.getElementById('tac-team-modal').style.display = 'none';
+            document.getElementById('tac-shot-goal-modal').style.display = 'none';
+        }
+
+        function logTacticalAction(teamName, actionName, playerObj, zoneName, coordX, coordY, colorHex) {
+            let currentClock = document.getElementById('tac-timer').innerText;
+            let logBox = document.getElementById('tac-action-log');
+            let playerName = playerObj ? `#${playerObj.number || playerObj.dorsal} ${playerObj.name || playerObj.nome}` : 'Adversário / Geral';
+            let zName = zoneName || 'Geral';
+            
+            let entryData = {
+                periodo: `${tacCurrentPeriod}º Período`,
+                tempo: currentClock,
+                equipa: teamName,
+                atleta: playerName,
+                zona: zName,
+                acao: actionName,
+                x: coordX || 'N/D',
+                y: coordY || 'N/D',
+                color: colorHex
+            };
+            tacticalLogs[tacCurrentPeriod].push(entryData);
+            syncLogsToLocalStorage();
+
+            let entry = document.createElement('div');
+            entry.className = 'log-entry';
+            let col = colorHex || '#00ffcc';
+            entry.innerHTML = `[${tacCurrentPeriod}ºP - ${currentClock}] <b>${teamName}</b> - ${playerName} (<span style="color:${col};">${zName}</span>): ${actionName}`;
+            logBox.insertBefore(entry, logBox.firstChild);
+        }
+
+        function syncLogsToLocalStorage() {
+            sessionData.tacticalLogs = tacticalLogs;
+            sessionData.tacticalGoalsHome = tacticalGoalsHome;
+            sessionData.tacticalGoalsAway = tacticalGoalsAway;
+            localStorage.setItem('futsal_session_data', JSON.stringify(sessionData));
+        }
+
+        function redrawLoadedLogs() {
+            let logBox = document.getElementById('tac-action-log');
+            logBox.innerHTML = '';
+            [1, 2].forEach(p => {
+                if (tacticalLogs[p]) {
+                    tacticalLogs[p].forEach(l => {
+                        let entry = document.createElement('div');
+                        entry.className = 'log-entry';
+                        let col = l.color || '#00ffcc';
+                        entry.innerHTML = `[${p}ºP - ${l.tempo}] <b>${l.equipa}</b> - ${l.atleta} (<span style="color:${col};">${l.zona}</span>): ${l.acao}`;
+                        logBox.insertBefore(entry, logBox.firstChild);
+                    });
+                }
+            });
+        }
+
+        function exportSavedTacticalJSON() {
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Sessao_Tatica_${sessionData.homeName || 'Dinamo'}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportSavedTacticalJSONAuto(suffix) {
+            sessionData.tacticalLogs = tacticalLogs;
+            sessionData.tacticalGoalsHome = tacticalGoalsHome;
+            sessionData.tacticalGoalsAway = tacticalGoalsAway;
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Backup_Automatico_Tatico_${sessionData.homeName || 'Dinamo'}_${suffix}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportTacticalExcel() {
+            let wb = XLSX.utils.book_new();
+            let data = [["Equipa", "Atleta", "Período", "Tempo", "Zona", "Ação", "X (%)", "Y (%)"]];
+            if (tacticalLogs[1]) tacticalLogs[1].forEach(l => data.push([l.equipa, l.atleta, l.periodo, l.tempo, l.zona, l.acao, l.x, l.y]));
+            if (tacticalLogs[2]) tacticalLogs[2].forEach(l => data.push([l.equipa, l.atleta, l.periodo, l.tempo, l.zona, l.acao, l.x, l.y]));
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Ações Táticas");
+            XLSX.writeFile(wb, `Relatorio_Tatico.xlsx`);
+        }
+
+        async function exportTacticalPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF('p', 'mm', 'a4');
+            let home = sessionData.homeName || 'Dinamo';
+            let away = sessionData.awayName || 'Visitante';
+
+            saveCurrentPeriodPitchState();
+            let pitchEl = document.getElementById('tactical-pitch');
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(15);
+            doc.text("Relatório Tático Comportamental", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Partida: ${home} ${tacticalGoalsHome} - ${tacticalGoalsAway} ${away}`, 14, 22);
+
+            try {
+                let currentScale = 2;
+                
+                // Capta P1
+                pitchEl.querySelectorAll('.tactical-marker').forEach(m => m.remove());
+                if (periodPitchHTML[1]) pitchEl.insertAdjacentHTML('beforeend', periodPitchHTML[1]);
+                let canvasP1 = await html2canvas(pitchEl, { scale: currentScale, backgroundColor: '#b87d4b' });
+                let imgDataP1 = canvasP1.toDataURL('image/png');
+                let p1Width = 180;
+                let p1Height = (canvasP1.height * p1Width) / canvasP1.width;
+                doc.addImage(imgDataP1, 'PNG', 14, 30, p1Width, p1Height);
+
+                doc.addPage();
+                
+                // Capta P2
+                pitchEl.querySelectorAll('.tactical-marker').forEach(m => m.remove());
+                if (periodPitchHTML[2]) pitchEl.insertAdjacentHTML('beforeend', periodPitchHTML[2]);
+                let canvasP2 = await html2canvas(pitchEl, { scale: currentScale, backgroundColor: '#b87d4b' });
+                let imgDataP2 = canvasP2.toDataURL('image/png');
+                let p2Width = 180;
+                let p2Height = (canvasP2.height * p2Width) / canvasP2.width;
+                doc.addImage(imgDataP2, 'PNG', 14, 15, p2Width, p2Height);
+
+                // Restaura estado original
+                pitchEl.querySelectorAll('.tactical-marker').forEach(m => m.remove());
+                if (periodPitchHTML[tacCurrentPeriod]) pitchEl.insertAdjacentHTML('beforeend', periodPitchHTML[tacCurrentPeriod]);
+            } catch (e) {
+                console.error("Erro na conversão PDF Tática", e);
+                doc.text("Erro ao capturar as imagens do campo.", 14, 40);
+            }
+
+            doc.save(`Relatorio_Tatico_${home}_vs_${away}.pdf`);
+        }
+        
+        // --- SISTEMA DE PREVENÇÃO CONTRA FECHO ACIDENTAL E BACKUP CONTÍNUO ---
+
+        // 1. Salvamento contínuo em segundo plano a cada 30 segundos
+        setInterval(() => {
+            syncLogsToLocalStorage();
+        }, 30000);
+
+        // 2. Alerta de segurança ao tentar fechar a aba ou atualizar a página
+        window.addEventListener('beforeunload', function (e) {
+            // Força a gravação imediata na memória do navegador antes de fechar
+            syncLogsToLocalStorage();
+
+            // Mensagem e pop-up nativo de confirmação do navegador
+            e.preventDefault();
+            e.returnValue = 'Atenção: Certifique-se de que exportou o ficheiro JSON da sessão antes de sair!';
+            return e.returnValue;
+        });
+
+        // 3. Auto-recuperação de dados ao abrir a página
+        document.addEventListener("DOMContentLoaded", () => {
+            let savedBackup = localStorage.getItem('futsal_session_data');
+            if (savedBackup) {
+                try {
+                    let parsed = JSON.parse(savedBackup);
+                    if (parsed && !sessionData.homeName) {
+                        sessionData = parsed;
+                    }
+                } catch (err) {
+                    console.error("Erro ao carregar o backup automático:", err);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
