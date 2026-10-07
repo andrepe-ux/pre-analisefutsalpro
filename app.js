@@ -61,6 +61,9 @@ window.initAppAfterLogin = function() {
             if (parsedSession.timeoutsUsed) timeoutsUsed = parsedSession.timeoutsUsed;
             if (parsedSession.awayYellowCards !== undefined) awayYellowCards = parsedSession.awayYellowCards;
             if (parsedSession.awayRedCards !== undefined) awayRedCards = parsedSession.awayRedCards;
+            if (parsedSession.players && parsedSession.players.length > 0) {
+                players = parsedSession.players;
+            }
         } catch(e) {}
     }
 
@@ -158,6 +161,45 @@ function exportSessionJSON() {
     downloadAnchor.remove();
 }
 
+function importPreviousSessionJSON(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let importedData = JSON.parse(e.target.result);
+            localStorage.setItem('futsal_session_data', JSON.stringify(importedData));
+            
+            if (importedData.homeGoals !== undefined) homeGoals = importedData.homeGoals;
+            if (importedData.awayGoals !== undefined) awayGoals = importedData.awayGoals;
+            if (importedData.statsData) statsData = importedData.statsData;
+            if (importedData.actionLogsHistory) actionLogsHistory = importedData.actionLogsHistory;
+            if (importedData.timeoutsUsed) timeoutsUsed = importedData.timeoutsUsed;
+            if (importedData.awayYellowCards !== undefined) awayYellowCards = importedData.awayYellowCards;
+            if (importedData.awayRedCards !== undefined) awayRedCards = importedData.awayRedCards;
+            if (importedData.players) players = importedData.players;
+
+            if (document.getElementById('sb-home-goals')) document.getElementById('sb-home-goals').innerText = homeGoals;
+            if (document.getElementById('sb-away-goals')) document.getElementById('sb-away-goals').innerText = awayGoals;
+            if (document.getElementById('away-yellow-count')) document.getElementById('away-yellow-count').innerText = awayYellowCards;
+            if (document.getElementById('away-red-count')) document.getElementById('away-red-count').innerText = awayRedCards;
+
+            renderPlayersList();
+            updateTimeoutUI();
+            updateFoulsUI();
+            updateStatsDisplay();
+
+            exportReportExcel();
+            alert("Sessão importada com sucesso e relatório Excel recuperado/descarregado!");
+        } catch (err) {
+            alert("Erro ao ler o ficheiro JSON. Certifique-se de que é um formato válido.");
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+}
+
 function exportSessionJSONAuto(suffix) {
     saveSessionStateToLocalStorage();
     let saved = localStorage.getItem('futsal_session_data');
@@ -235,6 +277,7 @@ function startTimer() {
 
                 players.forEach(player => {
                     if (player.isOnField) {
+                        player.secondsOnFieldActive = (player.secondsOnFieldActive || 0) + 1;
                         if (currentPeriod === 1) player.secondsPlayedP1++;
                         else player.secondsPlayedP2++;
                     } else {
@@ -248,6 +291,10 @@ function startTimer() {
                 alert(`Fim do ${currentPeriod}º Período!`);
                 if (currentPeriod === 1) {
                     switchPeriod(2);
+                } else if (currentPeriod === 2) {
+                    exportReportExcel();
+                    exportSessionJSON();
+                    alert("Fim do Jogo! Os relatórios Excel e JSON foram descarregados automaticamente.");
                 }
             }
         }, 1000);
@@ -332,7 +379,7 @@ function updateFoulsUI() {
             homeFoulsEl.innerText = `⚠️ LIMP/5 FALTAS`;
         } else if (homeFouls === 4) {
             homeFoulsEl.className = 'sb-team-fouls warning';
-            homeFoulsEl.innerText = `⚠️️ 4ª FALTA (AVISO)`;
+            homeFoulsEl.innerText = `⚠ 4ª FALTA (AVISO)`;
         } else {
             homeFoulsEl.className = 'sb-team-fouls';
         }
@@ -380,6 +427,7 @@ function togglePlayerField(index) {
             return;
         }
         player.isOnField = true;
+        player.secondsOnFieldActive = 0;
         player.substitutionsCount++;
     } else {
         if (currentFieldCount <= 3) {
@@ -387,6 +435,7 @@ function togglePlayerField(index) {
             return;
         }
         player.isOnField = false;
+        player.secondsOnFieldActive = 0;
     }
     renderPlayersList();
     saveSessionStateToLocalStorage();
@@ -401,17 +450,23 @@ function addCard(event, index, cardType) {
     let teamName = document.getElementById('input-home-name') ? document.getElementById('input-home-name').value : 'DINAMO';
     
     if (cardType === 'yellow') {
-        player.yellowCards++;
+        player.yellowCards = (player.yellowCards || 0) + 1;
         logAction(teamName.toUpperCase(), `Cartão Amarelo: #${player.number} ${player.name}`, null, null);
         if (player.yellowCards >= 2) {
-            player.redCards++;
-            if (player.isOnField) player.isOnField = false;
+            player.redCards = (player.redCards || 0) + 1;
+            if (player.isOnField) {
+                player.isOnField = false;
+                player.secondsOnFieldActive = 0;
+            }
             triggerRedCardExclusion();
             logAction(teamName.toUpperCase(), `🟥 2º Amarelo (Exclusão 2 min): #${player.number} ${player.name}`, null, null);
         }
     } else if (cardType === 'red') {
-        player.redCards++;
-        if (player.isOnField) player.isOnField = false;
+        player.redCards = (player.redCards || 0) + 1;
+        if (player.isOnField) {
+            player.isOnField = false;
+            player.secondsOnFieldActive = 0;
+        }
         triggerRedCardExclusion();
         logAction(teamName.toUpperCase(), `Cartão Vermelho Direto (Exclusão 2 min): #${player.number} ${player.name}`, null, null);
     }
@@ -438,10 +493,10 @@ function correctCardValue(event, index, cardType, delta) {
     let player = players[index];
 
     if (cardType === 'yellow') {
-        player.yellowCards += delta;
+        player.yellowCards = (player.yellowCards || 0) + delta;
         if (player.yellowCards < 0) player.yellowCards = 0;
     } else if (cardType === 'red') {
-        player.redCards += delta;
+        player.redCards = (player.redCards || 0) + delta;
         if (player.redCards < 0) player.redCards = 0;
         if (player.redCards === 0) {
             redCardActive = false;
@@ -651,12 +706,18 @@ function renderPlayersList() {
     container.innerHTML = '';
 
     players.forEach((player, index) => {
+        let isYellowWarning = player.isOnField && ((player.secondsOnFieldActive || 0) >= 180);
         let tile = document.createElement('div');
-        tile.className = `player-card-tile ${player.isOnField ? 'field' : ''}`;
+        tile.className = `player-card-tile ${player.isOnField ? 'field' : ''} ${isYellowWarning ? 'sub-warning-yellow' : ''}`;
+        tile.style.borderColor = isYellowWarning ? '#ffcc00' : '';
         tile.onclick = function() { togglePlayerField(index); };
         
-        let totalPlayed = player.secondsPlayedP1 + player.secondsPlayedP2;
-        let totalRested = player.secondsRestedP1 + player.secondsRestedP2;
+        let totalPlayed = (player.secondsPlayedP1 || 0) + (player.secondsPlayedP2 || 0);
+        let totalRested = (player.secondsRestedP1 || 0) + (player.secondsRestedP2 || 0);
+        let activeFieldTime = player.isOnField ? formatTime(player.secondsOnFieldActive || 0) : "00:00";
+
+        let yCount = player.yellowCards || 0;
+        let rCount = player.redCards || 0;
 
         tile.innerHTML = `
             <div class="tile-header">
@@ -664,6 +725,10 @@ function renderPlayersList() {
                 <input type="text" class="player-name-input" value="${player.name}" onclick="event.stopPropagation()" onchange="updatePlayerName(${index}, this.value)">
             </div>
             <div class="tile-timers-box">
+                <div class="tile-timer-row">
+                    <span class="tile-time-label">⏱️ Ativo (Campo):</span>
+                    <span class="tile-time-val" id="tile-active-${index}" style="${isYellowWarning ? 'color: #ffcc00; font-weight: bold;' : 'color: #00ffcc;'}">${activeFieldTime}</span>
+                </div>
                 <div class="tile-timer-row">
                     <span class="tile-time-label">Jogo:</span>
                     <span class="tile-time-val play" id="tile-play-${index}">${formatTime(totalPlayed)}</span>
@@ -675,13 +740,13 @@ function renderPlayersList() {
             </div>
             <div class="tile-footer">
                 <div class="tile-cards" onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 4px;">
-                    <button class="card-square yellow-sq big-card" onclick="addCard(event, ${index}, 'yellow')" title="Amarelo">${player.yellowCards > 0 ? player.yellowCards : '🟨'}</button>
-                    ${player.yellowCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'yellow', -1)">-</button>` : ''}
+                    <button class="card-square yellow-sq big-card" onclick="addCard(event, ${index}, 'yellow')" title="Amarelo">${yCount > 0 ? yCount : '🟨'}</button>
+                    ${yCount > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'yellow', -1)">-</button>` : ''}
                     
-                    <button class="card-square red-sq big-card" onclick="addCard(event, ${index}, 'red')" title="Vermelho">${player.redCards > 0 ? player.redCards : '🟥'}</button>
-                    ${player.redCards > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'red', -1)">-</button>` : ''}
+                    <button class="card-square red-sq big-card" onclick="addCard(event, ${index}, 'red')" title="Vermelho">${rCount > 0 ? rCount : '🟥'}</button>
+                    ${rCount > 0 ? `<button class="btn-corr" onclick="correctCardValue(event, ${index}, 'red', -1)">-</button>` : ''}
                 </div>
-                <span class="tile-status-badge">${player.isOnField ? 'EM CAMPO' : 'BANCO'} (${player.substitutionsCount})</span>
+                <span class="tile-status-badge">${player.isOnField ? (isYellowWarning ? '⚠️ SUBSTITUIR' : 'EM CAMPO') : 'BANCO'} (${player.substitutionsCount || 0})</span>
             </div>
         `;
         container.appendChild(tile);
@@ -692,11 +757,19 @@ function updateTimesOnly() {
     players.forEach((player, index) => {
         const playEl = document.getElementById(`tile-play-${index}`);
         const restEl = document.getElementById(`tile-rest-${index}`);
-        if (playEl && restEl) {
-            let totalPlayed = player.secondsPlayedP1 + player.secondsPlayedP2;
-            let totalRested = player.secondsRestedP1 + player.secondsRestedP2;
-            playEl.innerText = formatTime(totalPlayed);
-            restEl.innerText = formatTime(totalRested);
+        const activeEl = document.getElementById(`tile-active-${index}`);
+        
+        let totalPlayed = (player.secondsPlayedP1 || 0) + (player.secondsPlayedP2 || 0);
+        let totalRested = (player.secondsRestedP1 || 0) + (player.secondsRestedP2 || 0);
+        
+        if (playEl) playEl.innerText = formatTime(totalPlayed);
+        if (restEl) restEl.innerText = formatTime(totalRested);
+        
+        if (player.isOnField) {
+            if (activeEl) activeEl.innerText = formatTime(player.secondsOnFieldActive || 0);
+            if ((player.secondsOnFieldActive || 0) >= 180) {
+                renderPlayersList();
+            }
         }
     });
 }
@@ -735,8 +808,8 @@ function initCharts() {
 function updateChartsData() {
     if (!chartMinutesInstance) return;
     let labels = players.map(p => `#${p.number} ${p.name.split(' ')[0]}`);
-    let minutesData = players.map(p => ((p.secondsPlayedP1 + p.secondsPlayedP2) / 60).toFixed(1));
-    let subsData = players.map(p => p.substitutionsCount);
+    let minutesData = players.map(p => (((p.secondsPlayedP1 || 0) + (p.secondsPlayedP2 || 0)) / 60).toFixed(1));
+    let subsData = players.map(p => p.substitutionsCount || 0);
 
     chartMinutesInstance.data.labels = labels;
     chartMinutesInstance.data.datasets[0].data = minutesData;
@@ -788,15 +861,15 @@ function exportReportExcel() {
     ];
 
     players.forEach(p => {
-        let t1 = formatTime(p.secondsPlayedP1);
-        let t2 = formatTime(p.secondsPlayedP2);
-        let tTotal = formatTime(p.secondsPlayedP1 + p.secondsPlayedP2);
+        let t1 = formatTime(p.secondsPlayedP1 || 0);
+        let t2 = formatTime(p.secondsPlayedP2 || 0);
+        let tTotal = formatTime((p.secondsPlayedP1 || 0) + (p.secondsPlayedP2 || 0));
         
-        let r1 = formatTime(p.secondsRestedP1);
-        let r2 = formatTime(p.secondsRestedP2);
-        let rTotal = formatTime(p.secondsRestedP1 + p.secondsRestedP2);
+        let r1 = formatTime(p.secondsRestedP1 || 0);
+        let r2 = formatTime(p.secondsRestedP2 || 0);
+        let rTotal = formatTime((p.secondsRestedP1 || 0) + (p.secondsRestedP2 || 0));
         
-        resumoData.push([p.number, p.name, t1, t2, tTotal, r1, r2, rTotal, p.substitutionsCount, p.yellowCards, p.redCards]);
+        resumoData.push([p.number, p.name, t1, t2, tTotal, r1, r2, rTotal, p.substitutionsCount || 0, p.yellowCards || 0, p.redCards || 0]);
     });
 
     resumoData.push([]);
@@ -823,17 +896,14 @@ function exportReportExcel() {
     XLSX.writeFile(wb, `Relatorio_PRO_${homeName}_vs_${awayName}.xlsx`);
 }
 
-// -------------------------------------------------------------
-// NOVA EXPORTAÇÃO PDF COM GRÁFICOS, MAPA DE CAMPO E TEXTO
-// -------------------------------------------------------------
 async function exportReportPDF() {
     if (typeof html2canvas === 'undefined') {
-        alert("Erro: A biblioteca html2canvas não foi carregada. Certifique-se de que a incluiu no HTML.");
+        alert("Erro: A biblioteca html2canvas não foi carregada.");
         return;
     }
 
     const { jsPDF } = window.jspdf;
-    let doc = new jsPDF('p', 'mm', 'a4'); // Formato A4
+    let doc = new jsPDF('p', 'mm', 'a4');
     let pageWidth = doc.internal.pageSize.getWidth();
     let pageHeight = doc.internal.pageSize.getHeight();
     let margin = 14;
@@ -842,7 +912,6 @@ async function exportReportPDF() {
     let homeName = document.getElementById('input-home-name') ? document.getElementById('input-home-name').value : 'DINAMO';
     let awayName = document.getElementById('input-away-name') ? document.getElementById('input-away-name').value : 'VISITANTE';
 
-    // Cabeçalho Principal
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("Relatório Oficial - Análise Futsal PRO", margin, yPos);
@@ -851,7 +920,6 @@ async function exportReportPDF() {
     doc.text(`Partida: ${homeName} ${homeGoals} - ${awayGoals} ${awayName}`, margin, yPos);
     yPos += 15;
 
-    // Capturar Campo Tático
     let pitchContainer = document.getElementById('capture-pitch-container');
     if (pitchContainer) {
         doc.setFontSize(14);
@@ -873,7 +941,6 @@ async function exportReportPDF() {
         yPos += imgHeight + 15;
     }
 
-    // Capturar Gráficos
     let charts = [
         { id: 'chartShots', title: 'Gráfico: Remates vs Golos' },
         { id: 'chartMinutes', title: 'Gráfico: Minutos Jogados' },
@@ -907,7 +974,6 @@ async function exportReportPDF() {
         }
     }
 
-    // Registos de Ações (Logs Táticos em Texto)
     doc.addPage();
     yPos = margin + 10;
     doc.setFontSize(16);
@@ -944,45 +1010,3 @@ async function exportReportPDF() {
 
     doc.save(`Relatorio_Grafico_PRO_${homeName}_vs_${awayName}.pdf`);
 }
-
-// --- SISTEMA DE PROTEÇÃO CONTRA PERDA DE DADOS (SEM COOKIES) ---
-
-// Função de Salvamento Contínuo em Segundo Plano
-function autoSaveSession() {
-    if (typeof sessionData !== 'undefined') {
-        if (typeof tacticalLogs !== 'undefined') sessionData.tacticalLogs = tacticalLogs;
-        if (typeof grLogs !== 'undefined') sessionData.grLogs = grLogs;
-        if (typeof players !== 'undefined') sessionData.players = players;
-        localStorage.setItem('futsal_session_data', JSON.stringify(sessionData));
-    }
-}
-
-// Dispara o salvamento automático a cada 30 segundos
-setInterval(() => {
-    saveSessionStateToLocalStorage();
-    autoSaveSession();
-}, 30000);
-
-// ALERTA DE SEGURANÇA: Previne o fecho acidental da aba/navegador
-window.addEventListener('beforeunload', function (e) {
-    saveSessionStateToLocalStorage();
-    autoSaveSession();
-    e.preventDefault();
-    e.returnValue = 'Atenção: Certifique-se de que exportou o ficheiro JSON da sessão antes de sair!';
-    return e.returnValue;
-});
-
-// AUTO-RECUPERAÇÃO
-window.addEventListener('DOMContentLoaded', function() {
-    let savedBackup = localStorage.getItem('futsal_session_data');
-    if (savedBackup) {
-        try {
-            let parsed = JSON.parse(savedBackup);
-            if (typeof sessionData !== 'undefined' && !sessionData.homeName) {
-                sessionData = parsed;
-            }
-        } catch (err) {
-            console.error("Erro ao ler o backup automático do localStorage:", err);
-        }
-    }
-});
